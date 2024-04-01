@@ -1,4 +1,8 @@
-import type { MetaFunction } from "@remix-run/node";
+import { ActionFunctionArgs, json, type MetaFunction } from "@remix-run/node";
+import { db } from "db/index.server";
+import { count } from "db/schema";
+import { useLoaderData, Form } from "@remix-run/react";
+import { eq, sql } from "drizzle-orm";
 
 export const meta: MetaFunction = () => {
   return [
@@ -7,35 +11,65 @@ export const meta: MetaFunction = () => {
   ];
 };
 
+export const loader = async () => {
+  const result = await db.select().from(count);
+
+  return json({ count: result[0].count });
+};
+
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const body = await request.formData();
+  const intent = body.get("intent");
+
+  if (intent === "increment") {
+    await db
+      .update(count)
+      .set({
+        count: sql`${count.count} + 1`,
+      })
+      .where(eq(count.id, 1));
+  } else {
+    await db
+      .update(count)
+      .set({
+        count: sql`${count.count} - 1`,
+      })
+      .where(eq(count.id, 1));
+  }
+
+  return json("");
+};
+
 export default function Index() {
+  const data = useLoaderData<typeof loader>();
+
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.8" }}>
-      <h1>Welcome to Remix</h1>
-      <ul>
-        <li>
-          <a
-            target="_blank"
-            href="https://remix.run/tutorials/blog"
-            rel="noreferrer"
-          >
-            15m Quickstart Blog Tutorial
-          </a>
-        </li>
-        <li>
-          <a
-            target="_blank"
-            href="https://remix.run/tutorials/jokes"
-            rel="noreferrer"
-          >
-            Deep Dive Jokes App Tutorial
-          </a>
-        </li>
-        <li>
-          <a target="_blank" href="https://remix.run/docs" rel="noreferrer">
-            Remix Docs
-          </a>
-        </li>
-      </ul>
-    </div>
+    <Form
+      method="POST"
+      style={{
+        fontFamily: "system-ui, sans-serif",
+        lineHeight: "1.8",
+        display: "flex",
+        gap: "8px",
+      }}
+    >
+      <button
+        name="intent"
+        value="increment"
+        onClick={() => console.log(data?.count)}
+      >
+        Increment
+      </button>
+      <span>
+        <b>{data?.count}</b>
+      </span>
+      <button
+        name="intent"
+        value="decrement"
+        onClick={() => console.log(data?.count)}
+      >
+        Decrement
+      </button>
+    </Form>
   );
 }
