@@ -1,10 +1,12 @@
-# Welcome to Remix + Vite!
+# PiggyBank
 
-📖 See the [Remix docs](https://remix.run/docs) and the [Remix Vite docs](https://remix.run/docs/en/main/future/vite) for details on supported features.
+**Make Sacing Money and Advanture!** Welcome to PiggyBank, where your financial goals meet fun! Dive into a world where saving money isn't just wise—it's exciting.
+
+Whether you're saving for a dream vacation, a new gadget, or simply a rainy day, PiggyBank makes it easy and enjoyable. Track your transactions, visualize your progress with playful charts, and set budgets that feel like personal quests. With PiggyBank, every penny saved is a step closer to your goals—and a whole lot of fun. Start your saving adventure today and watch your financial dreams turn into reality!
 
 ## Development
 
-Run the Vite dev server:
+Run the dev server:
 
 ```shellscript
 npm run dev
@@ -23,14 +25,3 @@ Then run the app in production mode:
 ```sh
 npm start
 ```
-
-Now you'll need to pick a host to deploy it to.
-
-### DIY
-
-If you're familiar with deploying Node applications, the built-in Remix app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
-- `build/server`
-- `build/client`
