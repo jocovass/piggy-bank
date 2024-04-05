@@ -1,20 +1,65 @@
-# fly.toml app configuration file generated for piggy-bank on 2024-04-02T21:40:44+01:00
-#
-# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
-#
-
 app = 'piggy-bank'
 primary_region = 'lhr'
+kill_signal = "SIGINT"
+kill_timout = 5
+processes = []
 
-[build]
+[experimental]
+  allowed_public_ports = [ ]
+  auto_rollback = true
 
-[http_service]
-  internal_port = 3000
-  force_https = true
-  auto_stop_machines = true
+[[services]]
+  internal_port = 8080
+  processes = ["app"]
+  protocol = "tcp"
   auto_start_machines = true
+  auto_stop_machines = true
   min_machines_running = 1
-  processes = ['app']
+  script_checks = []
+
+  [services.concurrency]
+    hard_limit = 100
+    soft_limit = 80
+    type = "connections"
+
+  [[services.ports]]
+    force_https = true
+    handlers = ["http"]
+    port = 80
+
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port = 443
+
+  [[services.tcp_checks]]
+    grace_period = "1s"
+    interval = "15s"
+    restart_limit = 0
+    timeout = "2s"
+
+  # Health check to see if the application responds to HTTP request
+  [[services.http_checks]]
+    interval = "10s"
+    grace_period = "1s"
+    method = "get"
+    path = "/"
+    protocol = "http"
+    restart_limit = 0
+    timeout = 500
+    tls_skip_verify = false
+    [services.http_checks.headers]
+
+  # Check if application successfully connects to DB or any thrid party application
+  [[services.http_checks]]
+    interval = "10s"
+    grace_period = "5s"
+    method = "get"
+    path = "/resources/healthcheck"
+    protocol = "http"
+    restart_limit = 0
+    timeout = "2s"
+    tls_skip_verify = false
+    [services.http_checks.headers]
 
 [[vm]]
   size = 'shared-cpu-1x'
