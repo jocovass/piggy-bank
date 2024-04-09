@@ -11,6 +11,8 @@
     "start": "remix-serve ./build/server/index.js",
     "test": "vitest",
     "coverage": "vitest run --coverage",
+    "test:e2e:dev": "playwright test --ui",
+    "test:e2e:install": "npx playwright install --with-deps chromium",
     "typecheck": "tsc"
   },
   "eslintIgnor": [
@@ -34,6 +36,7 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^8.4.1",
+    "@playwright/test": "^1.43.0",
     "@remix-run/dev": "^2.8.1",
     "@remix-run/eslint-config": "^2.8.1",
     "@remix-run/testing": "^2.8.1",
