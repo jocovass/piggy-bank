@@ -53,6 +53,7 @@
     "enforce-unique": "^1.3.0",
     "eslint": "^8.38.0",
     "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-no-relative-import-paths": "^1.5.4",
     "eslint-plugin-remix-react-routes": "^1.0.5",
     "jsdom": "^24.0.0",
     "msw": "^2.2.13",

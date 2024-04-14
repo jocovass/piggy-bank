@@ -50,6 +50,38 @@ jobs:
       - name: 🔎 Type check
         run: npm run typecheck
 
+  database:
+    name: 🛠 Create New Test Branch
+    runs-on: ubuntu-22.04
+    if: ${{ github.event_name == 'pull_request' }}
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 📥 Download deps
+        uses: bahmutov/npm-install@v1
+
+      - name: 🏷 Get Branch Name
+        id: branch-name
+        uses: tj-actions/branch-names@v8
+
+      - name: 🚧 Create Neon Branch
+        id: create-branch
+        uses: neondatabase/create-branch-action@v4
+        with:
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
+          parent_id: ${{ secrets.NEON_MAIN_ID }}
+          branch_name: from_action_reusable
+          username: ${{ secrets.NEON_DATABASE_USERNAME }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+      - run: echo project_id ${{ steps.create-branch.outputs.project_id }}
+      - run: echo branch_id ${{ steps.create-branch.outputs.branch_id }}
+
   vitest:
     name: ⚡ Vitest
     runs-on: ubuntu-22.04
