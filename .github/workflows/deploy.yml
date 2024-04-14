@@ -75,8 +75,10 @@ jobs:
         uses: neondatabase/create-branch-action@v4
         with:
           project_id: ${{ secrets.NEON_PROJECT_ID }}
-          parent_id: ${{ secrets.NEON_MAIN_ID }}
-          branch_name: from_action_reusable
+          parent: ${{ secrets.NEON_MAIN_ID }}
+          branch_name:
+            pr-${{ github.event.number }}-${{
+            steps.branch-name.outputs.current_branch }}
           username: ${{ secrets.NEON_DATABASE_USERNAME }}
           api_key: ${{ secrets.NEON_API_KEY }}
       - run: echo project_id ${{ steps.create-branch.outputs.project_id }}
