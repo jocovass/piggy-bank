@@ -50,7 +50,7 @@ jobs:
       - name: 🔎 Type check
         run: npm run typecheck
 
-  database:
+  test-database:
     name: 🛠 Create New Test Branch
     runs-on: ubuntu-22.04
     if: ${{ github.event_name == 'pull_request' }}
@@ -83,6 +83,14 @@ jobs:
           api_key: ${{ secrets.NEON_API_KEY }}
       - run: echo project_id ${{ steps.create-branch.outputs.project_id }}
       - run: echo branch_id ${{ steps.create-branch.outputs.branch_id }}
+
+      - name: 🧬 Generate Migrations
+        env: DB_URL=${{steps.create-branch.outputs.db_url_with_pooler}}?sslmode=require
+        run: npm run db:generate
+
+      - name: 🏃‍♂️ Run Migrations
+        env: DB_URL=${{steps.create-branch.outputs.db_url_with_pooler}}?sslmode=require
+        run: npm run db:migrate
 
   vitest:
     name: ⚡ Vitest
