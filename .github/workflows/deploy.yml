@@ -88,9 +88,9 @@ jobs:
         run: npm run db:generate
 
       - name: 🏃‍♂️ Run Migrations
-        run: |
-          echo DB_URL=${{ steps.create-branch.outputs.db_url }}?sslmode=require >> .env
-          npm run db:migrate
+        env:
+          DB_URL: ${{ steps.create-branch.outputs.db_url }}?sslmode=require
+        run: npm run db:migrate
 
   vitest:
     name: ⚡ Vitest
