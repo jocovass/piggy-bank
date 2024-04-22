@@ -81,16 +81,17 @@ jobs:
             steps.branch-name.outputs.current_branch }}
           username: ${{ secrets.NEON_DATABASE_USERNAME }}
           api_key: ${{ secrets.NEON_API_KEY }}
+        run: echo OUTPUTS ${{ steps.create-branch.outputs }}
 
       - name: 🧬 Generate Migrations
         run: npm run db:generate
 
       - name: 🧳 Run Migrations
-        run: |
-          touch .env
-          echo DATABASE_URL=${{ steps.create-branch.outputs.db_url_with_pooler }}?sslmode=require >> .env
-          echo DB_URL=${{ steps.create-branch.outputs.db_url }}?sslmode=require >> .env
-          npm run db:migrate
+        env:
+          DB_URL:'postgresql://${{ secrets.NEON_DATABASE_USERNAME }}:${{
+          secrets.NEON_DATABASE_PASSWORD }}@${{ steps.create-branch.outputs.host
+          }}/${{ secrets.NEON_DATABASE }}?sslmode=require'
+        run: npm run db:migrate
 
   vitest:
     name: ⚡ Vitest
