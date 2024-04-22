@@ -84,12 +84,15 @@ jobs:
       - run: echo project_id ${{ steps.create-branch.outputs.project_id }}
       - run: echo branch_id ${{ steps.create-branch.outputs.branch_id }}
 
+      - name: 🔑 Set DB URL as env variable
+        run:
+          echo "DB_URL=${{ steps.create-branch.outputs.db_url
+          }}?sslmode=require" >> $GITHUB_ENV
+
       - name: 🧬 Generate Migrations
         run: npm run db:generate
 
-      - name: 🏃‍♂️ Run Migrations
-        env:
-          DB_URL: ${{ steps.create-branch.outputs.db_url }}?sslmode=require
+      - name: 🧳 Run Migrations
         run: npm run db:migrate
 
   vitest:
