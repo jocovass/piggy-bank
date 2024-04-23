@@ -52,6 +52,7 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       db_host: ${{ steps.create-branch.outputs.host }}
+      current_branch: ${{ steps.branch-name.outputs.current_branch }}
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -157,7 +158,7 @@ jobs:
   cleanup:
     name: 🧹 Clean up test branch
     runs-on: ubuntu-22.04
-    needs: [vitest, playwright]
+    needs: [migration, vitest, playwright]
     if: always()
     steps:
       - name: ⬇️ Checkout repo
@@ -177,6 +178,6 @@ jobs:
           project_id: ${{ secrets.NEON_PROJECT_ID }}
           branch:
             test-${{ github.event.number }}-${{
-            steps.branch-name.outputs.current_branch }}
+            needs.migration.outputs.current_branch }}
           api_key: ${{ secrets.NEON_API_KEY }}
           username: ${{ secrets.NEON_DATABASE_USERNAME }}
