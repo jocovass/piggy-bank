@@ -50,9 +50,60 @@ jobs:
       - name: 🔎 Type check
         run: npm run typecheck
 
+  migration:
+    name: 🛠 Test DB
+    runs-on: ubuntu-22.04
+    if: ${{ github.event_name == 'pull_request' }}
+    outputs:
+      db_host: ${{ steps.create-branch.outputs.host }}
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 📥 Download deps
+        uses: bahmutov/npm-install@v1
+
+      - name: 🏷 Get Branch Name
+        id: branch-name
+        uses: tj-actions/branch-names@v8
+
+      - name: 🚧 Create Neon Branch
+        id: create-branch
+        uses: neondatabase/create-branch-action@v4
+        with:
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
+          parent: ${{ secrets.NEON_MAIN_ID }}
+          branch_name:
+            test-${{ github.event.number }}-${{
+            steps.branch-name.outputs.current_branch }}
+          username: ${{ secrets.NEON_DATABASE_USERNAME }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+
+      - name: 🧬 Generate Migrations
+        run: npm run db:generate
+
+      - name: 🧳 Run Migrations
+        env:
+          DB_URL:
+            ${{ format('postgresql://{0}:{1}@{2}/{3}?sslmode=require',
+            secrets.NEON_DATABASE_USERNAME, secrets.NEON_DATABASE_PASSWORD,
+            steps.create-branch.outputs.host, secrets.NEON_DATABASE) }}
+        run: npm run db:migrate
+
   vitest:
     name: ⚡ Vitest
     runs-on: ubuntu-22.04
+    needs: [migration]
+    env:
+      DB_URL:
+        ${{ format('postgresql://{0}:{1}@{2}/{3}?sslmode=require',
+        secrets.NEON_DATABASE_USERNAME, secrets.NEON_DATABASE_PASSWORD,
+        needs.migration.outputs.db_host, secrets.NEON_DATABASE) }}
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -72,6 +123,12 @@ jobs:
     name: 🎭 Playwright
     runs-on: ubuntu-22.04
     timeout-minutes: 60
+    needs: [migration]
+    env:
+      DB_URL:
+        ${{ format('postgresql://{0}:{1}@{2}/{3}?sslmode=require',
+        secrets.NEON_DATABASE_USERNAME, secrets.NEON_DATABASE_PASSWORD,
+        needs.migration.outputs.db_host, secrets.NEON_DATABASE) }}
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -86,8 +143,6 @@ jobs:
 
       - name: 📥 Install Playwright Browsers
         run: npm run test:e2e:install
-
-      # add migration setps/seed later
 
       - name: 🏗 Build
         run: npm run build
@@ -106,6 +161,7 @@ jobs:
   # deploy:
   #   name: 🚀 Deploy
   #   runs-on: ubuntu-22.04
+  #   needs: [lint, typecheck, migration, vitest, playwright]
   #   # Only build/deploy branches on push
   #   if: ${{ github.event_name == 'push' }}
 
