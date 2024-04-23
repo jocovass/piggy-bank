@@ -1,0 +1,183 @@
+name: 🦺 Development
+on:
+  pull_request: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  lint:
+    name: ⬣ ESLint
+    runs-on: ubuntu-22.04
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 📥 Download deps
+        uses: bahmutov/npm-install@v1
+
+      - name: 🔬 Lint
+        run: npm run lint
+
+  typecheck:
+    name: ʦ TypeScript
+    runs-on: ubuntu-22.04
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: ⬡ Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 📥 Download deps
+        uses: bahmutov/npm-install@v1
+
+      - name: 🔎 Type check
+        run: npm run typecheck
+
+  migration:
+    name: 🛠 Test DB
+    runs-on: ubuntu-22.04
+    outputs:
+      db_host: ${{ steps.create-branch.outputs.host }}
+      current_branch: ${{ steps.branch-name.outputs.current_branch }}
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 📥 Download deps
+        uses: bahmutov/npm-install@v1
+
+      - name: 🏷 Get Branch Name
+        id: branch-name
+        uses: tj-actions/branch-names@v8
+
+      - name: 🚧 Create Neon Branch
+        id: create-branch
+        uses: neondatabase/create-branch-action@v4
+        with:
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
+          parent: ${{ secrets.NEON_MAIN_ID }}
+          branch_name:
+            test-${{ github.event.number }}-${{
+            steps.branch-name.outputs.current_branch }}
+          username: ${{ secrets.NEON_DATABASE_USERNAME }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+
+      - name: 🧬 Generate Migrations
+        run: npm run db:generate
+
+      - name: 🧳 Run Migrations
+        env:
+          DB_URL:
+            ${{ format('postgresql://{0}:{1}@{2}/{3}?sslmode=require',
+            secrets.NEON_DATABASE_USERNAME, secrets.NEON_DATABASE_PASSWORD,
+            steps.create-branch.outputs.host, secrets.NEON_DATABASE) }}
+        run: npm run db:migrate
+
+  vitest:
+    name: ⚡ Vitest
+    runs-on: ubuntu-22.04
+    needs: migration
+    env:
+      DB_URL:
+        ${{ format('postgresql://{0}:{1}@{2}/{3}?sslmode=require',
+        secrets.NEON_DATABASE_USERNAME, secrets.NEON_DATABASE_PASSWORD,
+        needs.migration.outputs.db_host, secrets.NEON_DATABASE) }}
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 📥 Download deps
+        uses: bahmutov/npm-install@v1
+
+      - name: ⚡ Run vitest
+        run: npm run test -- --coverage
+
+  playwright:
+    name: 🎭 Playwright
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    needs: migration
+    env:
+      DB_URL:
+        ${{ format('postgresql://{0}:{1}@{2}/{3}?sslmode=require',
+        secrets.NEON_DATABASE_USERNAME, secrets.NEON_DATABASE_PASSWORD,
+        needs.migration.outputs.db_host, secrets.NEON_DATABASE) }}
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: ⬡ Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 📥 Download deps
+        uses: bahmutov/npm-install@v1
+
+      - name: 📥 Install Playwright Browsers
+        run: npm run test:e2e:install
+
+      - name: 🏗 Build
+        run: npm run build
+
+      - name: 🎭 Playwright test
+        run: npx playwright test
+
+      - name: 📊 Upload report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+  cleanup:
+    name: 🧹 Clean up test branch
+    runs-on: ubuntu-22.04
+    needs: [migration, vitest, playwright]
+    if: always()
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 📥 Download deps
+        uses: bahmutov/npm-install@v1
+
+      - name: Delete test branch
+        uses: neondatabase/delete-branch-action@v3.1.3
+        with:
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
+          branch:
+            test-${{ github.event.number }}-${{
+            needs.migration.outputs.current_branch }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+          username: ${{ secrets.NEON_DATABASE_USERNAME }}
