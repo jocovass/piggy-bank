@@ -17,8 +17,9 @@ export const meta: MetaFunction = () => {
 
 export const loader = async () => {
 	const result = await db.select().from(count);
+	console.log(result);
 
-	return json({ count: result[0].count });
+	return json({ count: result[0]?.count || 0 });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -65,7 +66,7 @@ export default function Index() {
 				Increment
 			</button>
 			<span>
-				<b>{data?.count}</b>
+				<b>COUNT: {data?.count}</b>
 			</span>
 			<button
 				name="intent"
