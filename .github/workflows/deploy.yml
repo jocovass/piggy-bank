@@ -51,9 +51,11 @@ jobs:
         run: npm run typecheck
 
   migration:
-    name: 🛠 Create New Test Branch
+    name: 🛠 Test DB
     runs-on: ubuntu-22.04
     if: ${{ github.event_name == 'pull_request' }}
+    outputs:
+      db_host: ${{ steps.create-branch.outputs.host }}
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -101,7 +103,7 @@ jobs:
       DB_URL:
         ${{ format('postgresql://{0}:{1}@{2}/{3}?sslmode=require',
         secrets.NEON_DATABASE_USERNAME, secrets.NEON_DATABASE_PASSWORD,
-        steps.create-branch.outputs.host, secrets.NEON_DATABASE) }}
+        needs.migration.outputs.db_host, secrets.NEON_DATABASE) }}
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -126,7 +128,7 @@ jobs:
       DB_URL:
         ${{ format('postgresql://{0}:{1}@{2}/{3}?sslmode=require',
         secrets.NEON_DATABASE_USERNAME, secrets.NEON_DATABASE_PASSWORD,
-        steps.create-branch.outputs.host, secrets.NEON_DATABASE) }}
+        needs.migration.outputs.db_host, secrets.NEON_DATABASE) }}
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
