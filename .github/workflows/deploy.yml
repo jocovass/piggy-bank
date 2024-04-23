@@ -81,6 +81,8 @@ jobs:
             steps.branch-name.outputs.current_branch }}
           username: ${{ secrets.NEON_DATABASE_USERNAME }}
           api_key: ${{ secrets.NEON_API_KEY }}
+
+      - name: LOGGG
         run: echo OUTPUTS ${{ steps.create-branch.outputs }}
 
       - name: 🧬 Generate Migrations
