@@ -90,9 +90,10 @@ jobs:
 
       - name: 🧳 Run Migrations
         env:
-          DB_URL:postgresql://${{ secrets.NEON_DATABASE_USERNAME }}:${{
-          secrets.NEON_DATABASE_PASSWORD }}@${{ steps.create-branch.outputs.host
-          }}/${{ secrets.NEON_DATABASE }}?sslmode=require
+          DB_URL:
+            ${{ format('postgresql://{0}:{1}@{2}/{3}?sslmode=require',
+            secrets.NEON_DATABASE_USERNAME, secrets.NEON_DATABASE_PASSWORD,
+            steps.create-branch.outputs.host, secrets.NEON_DATABASE) }}
         run: npm run db:migrate
 
   vitest:
