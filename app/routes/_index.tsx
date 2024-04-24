@@ -17,7 +17,6 @@ export const meta: MetaFunction = () => {
 
 export const loader = async () => {
 	const result = await db.select().from(count);
-	console.log(result);
 
 	return json({ count: result[0]?.count || 0 });
 };
