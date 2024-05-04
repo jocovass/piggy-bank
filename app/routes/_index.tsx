@@ -5,6 +5,7 @@ import {
 } from '@remix-run/node';
 import { useLoaderData, Form } from '@remix-run/react';
 import { eq, sql } from 'drizzle-orm';
+import { Button } from '~/app/components/ui/button';
 import { db } from '~/db/index.server';
 import { count } from '~/db/schema';
 
@@ -57,23 +58,23 @@ export default function Index() {
 				gap: '8px',
 			}}
 		>
-			<button
+			<Button
 				name="intent"
 				value="increment"
 				onClick={() => console.log(data?.count)}
 			>
 				Increment
-			</button>
+			</Button>
 			<span>
 				<b>COUNT: {data?.count}</b>
 			</span>
-			<button
+			<Button
 				name="intent"
 				value="decrement"
 				onClick={() => console.log(data?.count)}
 			>
 				Decrement
-			</button>
+			</Button>
 		</Form>
 	);
 }
