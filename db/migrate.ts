@@ -10,7 +10,7 @@ async function main() {
 		await migrate(db, { migrationsFolder: './db/drizzle' });
 		console.log('✅ Migration completed');
 	} catch (e) {
-		console.error('Error during migraton: ', e);
+		console.error('💥 Error during migraton: ', e);
 		process.exit(1);
 	}
 }

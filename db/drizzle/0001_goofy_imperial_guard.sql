@@ -1,1 +1,0 @@
-ALTER TABLE "count" ADD COLUMN "age" integer;

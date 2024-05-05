@@ -4,10 +4,7 @@ import {
 	type MetaFunction,
 } from '@remix-run/node';
 import { useLoaderData, Form } from '@remix-run/react';
-import { eq, sql } from 'drizzle-orm';
 import { Button } from '~/app/components/ui/button';
-import { db } from '~/db/index.server';
-import { count } from '~/db/schema';
 
 export const meta: MetaFunction = () => {
 	return [
@@ -17,9 +14,7 @@ export const meta: MetaFunction = () => {
 };
 
 export const loader = async () => {
-	const result = await db.select().from(count);
-
-	return json({ count: result[0]?.count || 0 });
+	return json({ count: 0 });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -27,19 +22,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	const intent = body.get('intent');
 
 	if (intent === 'increment') {
-		await db
-			.update(count)
-			.set({
-				count: sql`${count.count} + 1`,
-			})
-			.where(eq(count.id, 1));
+		console.log('increment');
 	} else {
-		await db
-			.update(count)
-			.set({
-				count: sql`${count.count} - 1`,
-			})
-			.where(eq(count.id, 1));
+		console.log('decrement');
 	}
 
 	return json('');
