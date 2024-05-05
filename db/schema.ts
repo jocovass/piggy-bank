@@ -106,7 +106,7 @@ export const connections = pgTable(
 			.notNull()
 			.$defaultFn(() => cuid()),
 		providerId: text('providerId').notNull(),
-		providerName: text('providerId').notNull(),
+		providerName: text('providerName').notNull(),
 		userId: varchar('userId', { length: 25 })
 			.notNull()
 			.references(() => users.id, {

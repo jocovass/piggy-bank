@@ -1,7 +1,4 @@
 import { type LoaderFunctionArgs } from '@remix-run/node';
-import { count } from 'drizzle-orm';
-import { db } from '~/db/index.server';
-import { count as countSchema } from '~/db/schema';
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const host =
@@ -11,7 +8,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		// If we can connect to the DB and make a simple query
 		// to ourselves, then we are good.
 		await Promise.all([
-			db.select({ count: count() }).from(countSchema),
 			fetch(`${new URL(request.url).protocol}${host}`, {
 				method: 'HEAD',
 				headers: { 'X-Healthcheck': 'true' },
