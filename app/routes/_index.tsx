@@ -5,6 +5,7 @@ import {
 } from '@remix-run/node';
 import { useLoaderData, Form } from '@remix-run/react';
 import { Button } from '~/app/components/ui/button';
+import { db } from '~/db/index.server';
 
 export const meta: MetaFunction = () => {
 	return [

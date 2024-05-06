@@ -3,7 +3,7 @@ import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 import { migrate } from 'drizzle-orm/neon-http/migrator';
 
-const db = drizzle(neon(process.env.DB_URL!));
+const db = drizzle(neon(process.env.DB_URL));
 
 async function main() {
 	try {
