@@ -21,7 +21,7 @@ export async function action({ request }: ActionFunctionArgs) {
 				where: (user, { eq }) => eq(user.id, data.email),
 			});
 
-			if (!existingUser) {
+			if (existingUser) {
 				ctx.addIssue({
 					code: z.ZodIssueCode.custom,
 					path: ['email'],
@@ -46,8 +46,15 @@ export async function action({ request }: ActionFunctionArgs) {
 export default function SignupRoute() {
 	const actionData = useActionData<typeof action>();
 	const [form, fields] = useForm({
+		id: 'signup-form',
 		constraint: getZodConstraint(schema),
+		defaultValue: {
+			email: '',
+		},
 		lastResult: actionData?.data,
+		onValidate({ formData }) {
+			return parseWithZod(formData, { schema });
+		},
 		shouldValidate: 'onBlur',
 		shouldRevalidate: 'onInput',
 	});
@@ -60,11 +67,11 @@ export default function SignupRoute() {
 				<Form method="POST" {...getFormProps(form)}>
 					<div id={form.errorId}>{form.errors}</div>
 					<Field
+						errors={fields.email.errors}
 						inputProps={{
 							...getInputProps(fields.email, { type: 'email' }),
 							autoComplete: 'email',
 							autoFocus: true,
-							className: 'text-red-400',
 						}}
 						labelProps={{ children: 'Email', htmlFor: fields.email.id }}
 					/>
