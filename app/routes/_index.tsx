@@ -3,7 +3,7 @@ import {
 	json,
 	type MetaFunction,
 } from '@remix-run/node';
-import { useLoaderData, Form } from '@remix-run/react';
+import { useLoaderData, Form, NavLink } from '@remix-run/react';
 import { Button } from '~/app/components/ui/button';
 
 export const meta: MetaFunction = () => {
@@ -60,6 +60,8 @@ export default function Index() {
 			>
 				Decrement
 			</Button>
+
+			<NavLink to="/signup">signup</NavLink>
 		</Form>
 	);
 }
