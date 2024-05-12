@@ -12,6 +12,19 @@ declare global {
 	}
 }
 
+export function init() {
+	const parsedEnv = schema.safeParse(process.env);
+
+	if (parsedEnv.success === false) {
+		console.error(
+			'❌ Invalid environment variables: ',
+			parsedEnv.error.flatten().fieldErrors,
+		);
+
+		throw new Error('Invalid environment varaibles');
+	}
+}
+
 /**
  * This is used in both `entry.server.ts` and `root.tsx` to ensure that
  * the environment variables are set and globally available before the app is
