@@ -5,7 +5,9 @@ import { Form, useActionData } from '@remix-run/react';
 import { z } from 'zod';
 import { Field } from '~/app/components/forms';
 import { Button } from '~/app/components/ui/button';
+import { verifySessionStorage } from '~/app/utils/verification.server';
 import { db } from '~/db/index.server';
+import { onboardingEmailSessionKey } from './onboarding';
 
 const schema = z.object({
 	email: z
@@ -18,7 +20,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	const submission = await parseWithZod(formData, {
 		schema: schema.superRefine(async (data, ctx) => {
 			const existingUser = await db.query.users.findFirst({
-				where: (user, { eq }) => eq(user.id, data.email),
+				where: (user, { eq }) => eq(user.email, data.email),
 			});
 
 			if (existingUser) {
@@ -40,7 +42,15 @@ export async function action({ request }: ActionFunctionArgs) {
 		);
 	}
 
-	return redirect('/');
+	const { email } = submission.value;
+	const session = await verifySessionStorage.getSession();
+	session.set(onboardingEmailSessionKey, email);
+
+	return redirect('/onboarding', {
+		headers: {
+			'Set-Cookie': await verifySessionStorage.commitSession(session),
+		},
+	});
 }
 
 export default function SignupRoute() {
@@ -48,9 +58,6 @@ export default function SignupRoute() {
 	const [form, fields] = useForm({
 		id: 'signup-form',
 		constraint: getZodConstraint(schema),
-		defaultValue: {
-			email: '',
-		},
 		lastResult: actionData?.data,
 		onValidate({ formData }) {
 			return parseWithZod(formData, { schema });
@@ -59,7 +66,6 @@ export default function SignupRoute() {
 		shouldRevalidate: 'onInput',
 	});
 
-	console.log(actionData);
 	return (
 		<div className="flex w-full items-center justify-center py-52">
 			<div>
