@@ -85,7 +85,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	const { firstName, lastName, password } = submission.value;
 	const hash = await bcrypt.hash(password, 10);
 
-	const newUser = await db.transaction(async tx => {
+	await db.transaction(async tx => {
 		const [newUser] = await tx
 			.insert(users)
 			.values({
@@ -102,7 +102,6 @@ export async function action({ request }: ActionFunctionArgs) {
 
 		return newUser;
 	});
-
 
 	return redirect('/');
 }
