@@ -103,7 +103,6 @@ export async function action({ request }: ActionFunctionArgs) {
 		return newUser;
 	});
 
-	console.log(newUser);
 
 	return redirect('/');
 }
