@@ -1,12 +1,18 @@
 import { useForm, getFormProps, getInputProps } from '@conform-to/react';
 import { parseWithZod, getZodConstraint } from '@conform-to/zod';
+import { UTCDate } from '@date-fns/utc';
+import { generateTOTP } from '@epic-web/totp';
 import { type ActionFunctionArgs, json, redirect } from '@remix-run/node';
 import { Form, useActionData } from '@remix-run/react';
 import { z } from 'zod';
 import { Field } from '~/app/components/forms';
 import { Button } from '~/app/components/ui/button';
-import { verifySessionStorage } from '~/app/utils/verification.server';
+import {
+	verificationMaxAge,
+	verifySessionStorage,
+} from '~/app/utils/verification.server';
 import { db } from '~/db/index.server';
+import { verifications } from '~/db/schema';
 import { onboardingEmailSessionKey } from './onboarding';
 
 const schema = z.object({
@@ -45,6 +51,29 @@ export async function action({ request }: ActionFunctionArgs) {
 	const { email } = submission.value;
 	const session = await verifySessionStorage.getSession();
 	session.set(onboardingEmailSessionKey, email);
+
+	const { otp, ...verifcationConfig } = generateTOTP({
+		algorithm: 'SHA256',
+		charSet: 'ABCDEFGHIJKLMNPQRSTUVWXYZ123456789',
+		period: verificationMaxAge,
+	});
+
+	const verificationConfig = {
+		...verifcationConfig,
+		type: 'onboarding',
+		target: email,
+		expiresAt: new UTCDate(Date.now() + verificationMaxAge * 1000),
+	};
+	const result = await db
+		.insert(verifications)
+		.values(verificationConfig)
+		.onConflictDoUpdate({
+			target: [verifications.target, verifications.type],
+			set: verificationConfig,
+		})
+		.returning();
+
+	console.log('verification resutl', result);
 
 	return redirect('/onboarding', {
 		headers: {
