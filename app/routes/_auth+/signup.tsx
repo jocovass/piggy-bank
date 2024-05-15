@@ -7,6 +7,8 @@ import { Form, useActionData } from '@remix-run/react';
 import { z } from 'zod';
 import { Field } from '~/app/components/forms';
 import { Button } from '~/app/components/ui/button';
+import { sendEmail } from '~/app/utils/email.server';
+import { SignupEmail } from '~/app/utils/emailTemplates';
 import {
 	verificationMaxAge,
 	verifySessionStorage,
@@ -64,16 +66,26 @@ export async function action({ request }: ActionFunctionArgs) {
 		target: email,
 		expiresAt: new UTCDate(Date.now() + verificationMaxAge * 1000),
 	};
-	const result = await db
+	await db
 		.insert(verifications)
 		.values(verificationConfig)
 		.onConflictDoUpdate({
 			target: [verifications.target, verifications.type],
 			set: verificationConfig,
-		})
-		.returning();
+		});
 
-	console.log('verification resutl', result);
+	const result = await sendEmail({
+		subject: 'Welcome to Piggy Bank',
+		to: email,
+		react: <SignupEmail otp={otp} onboardingUrl="/onboarding" />,
+	});
+
+	if (result.status === 'error') {
+		return json(
+			{ data: submission.reply({ formErrors: [result.error.message] }) },
+			{ status: result.error.statusCode },
+		);
+	}
 
 	return redirect('/onboarding', {
 		headers: {

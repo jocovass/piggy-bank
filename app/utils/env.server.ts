@@ -3,6 +3,8 @@ import { z } from 'zod';
 const schema = z.object({
 	DB_URL: z.string(),
 	NODE_ENV: z.enum(['production', 'development', 'test'] as const),
+	MOCK: z.boolean().default(false),
+	RESEND_API_KEY: z.string(),
 	VERIFICATION_SESSION_SECRET: z.string(),
 });
 
