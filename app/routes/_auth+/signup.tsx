@@ -28,6 +28,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	const submission = await parseWithZod(formData, {
 		schema: schema.superRefine(async (data, ctx) => {
 			const existingUser = await db.query.users.findFirst({
+				columns: { id: true },
 				where: (user, { eq }) => eq(user.email, data.email),
 			});
 

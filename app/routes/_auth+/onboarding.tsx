@@ -110,7 +110,7 @@ export default function OnboardingRoute() {
 	const data = useLoaderData<typeof loader>();
 	const actionData = useActionData<typeof action>();
 	const [form, fields] = useForm({
-		id: 'signup-form',
+		id: 'onboarding-form',
 		constraint: getZodConstraint(schema),
 		lastResult: actionData?.data,
 		onValidate({ formData }) {

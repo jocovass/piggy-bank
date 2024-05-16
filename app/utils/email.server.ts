@@ -35,7 +35,7 @@ export async function sendEmail({
 	| { html: string; text: string; react?: never }
 	| { react: ReactElement; html?: never; text?: never }
 )) {
-	const from = 'hello@piggybank.dev';
+	const from = 'onboarding@resend.dev';
 
 	const email = {
 		from,
@@ -56,7 +56,7 @@ export async function sendEmail({
 		method: 'POST',
 		headers: {
 			Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-			'Content-Type': 'aplication/json',
+			'Content-Type': 'application/json',
 		},
 		body: JSON.stringify(email),
 	});
