@@ -1,5 +1,11 @@
+import { UTCDate } from '@date-fns/utc';
+import { generateTOTP } from '@epic-web/totp';
 import { getOriginUrl } from '~/app/utils/misc';
+import { verificationMaxAge } from '~/app/utils/verification.server';
+import { db } from '~/db/index.server';
+import { verifications } from '~/db/schema';
 import {
+	verifyCodeParamKey,
 	verifyRedirectToParamKey,
 	verifyTargetParamKey,
 	verifyTypeParamKey,
@@ -17,7 +23,7 @@ export type GenerateRedirectUrl = {
 	type: VerificationTypes;
 	target: string;
 };
-export async function generateRedirectUrl({
+export function generateRedirectUrl({
 	redirectUrl,
 	request,
 	type,
@@ -53,10 +59,45 @@ export type PrepareTOTP = {
 	target: string;
 };
 export async function prepareOtpVerification({
-	period,
+	period = verificationMaxAge,
 	request,
 	type,
 	target,
 }: PrepareTOTP) {
-	// const verifyUrl =
+	const verifyUrl = generateRedirectUrl({
+		request,
+		target,
+		type,
+	});
+
+	const { otp, ...totpConfig } = generateTOTP({
+		algorithm: 'SHA256',
+		charSet: 'ABCDEFGHIJKLMNPQRSTUVWXYZ123456789',
+		period,
+	});
+
+	const verificationConfig = {
+		...totpConfig,
+		type: 'onboarding',
+		target,
+		expiresAt: new UTCDate(Date.now() + period * 1000),
+	};
+
+	await db
+		.insert(verifications)
+		.values(verificationConfig)
+		.onConflictDoUpdate({
+			target: [verifications.target, verifications.type],
+			set: verificationConfig,
+		});
+
+	/**
+	 * We want to return two almost identical URLs "redirectTo" and "verifyUrl".
+	 * The only difference is that the "verifyUrl" should have the OTP query param
+	 * attached to. It is important not to expose the OTP on the "redirectUrl".
+	 */
+	const redirectUrl = new URL(verifyUrl);
+	verifyUrl.searchParams.set(verifyCodeParamKey, otp);
+
+	return { verifyUrl, otp, redirectUrl };
 }
