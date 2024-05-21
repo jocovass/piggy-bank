@@ -27,7 +27,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		console.log('decrement');
 	}
 
-	return json('');
+	return json({});
 };
 
 export default function Index() {
@@ -62,7 +62,8 @@ export default function Index() {
 					Decrement
 				</Button>
 
-				<NavLink to="/signup">signup</NavLink>
+				<NavLink to="/login">Login</NavLink>
+				<NavLink to="/signup">Signup</NavLink>
 			</Form>
 		</div>
 	);

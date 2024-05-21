@@ -5,6 +5,7 @@ const schema = z.object({
 	NODE_ENV: z.enum(['production', 'development', 'test'] as const),
 	MOCK: z.boolean().default(false),
 	RESEND_API_KEY: z.string(),
+	SESSION_SECRET: z.string(),
 	VERIFICATION_SESSION_SECRET: z.string(),
 });
 
