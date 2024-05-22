@@ -3,8 +3,14 @@ import {
 	json,
 	type MetaFunction,
 } from '@remix-run/node';
-import { useLoaderData, Form, NavLink } from '@remix-run/react';
+import {
+	useLoaderData,
+	Form,
+	NavLink,
+	useRouteLoaderData,
+} from '@remix-run/react';
 import { Button } from '~/app/components/ui/button';
+import { type loader as rootLoader } from '~/app/root';
 
 export const meta: MetaFunction = () => {
 	return [
@@ -27,11 +33,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		console.log('decrement');
 	}
 
-	return json('');
+	return json({});
 };
 
 export default function Index() {
 	const data = useLoaderData<typeof loader>();
+	const userData = useRouteLoaderData<typeof rootLoader>('root');
 
 	return (
 		<div>
@@ -62,7 +69,14 @@ export default function Index() {
 					Decrement
 				</Button>
 
-				<NavLink to="/signup">signup</NavLink>
+				<NavLink to="/login">Login</NavLink>
+				<NavLink to="/signup">Signup</NavLink>
+
+				{userData?.data ? (
+					<div>
+						Hello: {userData?.data.firstName} {userData?.data.lastName}
+					</div>
+				) : null}
 			</Form>
 		</div>
 	);

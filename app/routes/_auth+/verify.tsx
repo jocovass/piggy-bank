@@ -94,7 +94,6 @@ export async function action({ request }: ActionFunctionArgs) {
 		async: true,
 	});
 
-	console.log(submission.status);
 	if (submission.status !== 'success') {
 		return json(
 			{ data: submission.reply() },
@@ -103,8 +102,6 @@ export async function action({ request }: ActionFunctionArgs) {
 			},
 		);
 	}
-
-	console.log('after this error shite');
 
 	const { target, type } = submission.value;
 
