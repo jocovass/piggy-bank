@@ -1,5 +1,6 @@
 import { useForm, getFormProps, getInputProps } from '@conform-to/react';
 import { parseWithZod, getZodConstraint } from '@conform-to/zod';
+import { UTCDate } from '@date-fns/utc';
 import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
@@ -7,14 +8,12 @@ import {
 	redirect,
 } from '@remix-run/node';
 import { Form, useActionData } from '@remix-run/react';
-import bcrypt from 'bcryptjs';
-import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { Field } from '~/app/components/forms';
 import { Button } from '~/app/components/ui/button';
-import { sessionStorage } from '~/app/utils/session.server';
+import { login, sessionKey } from '~/app/utils/auth.server';
+import { authSessionStorage } from '~/app/utils/session.server';
 import { db } from '~/db/index.server';
-import { users } from '~/db/schema';
 
 const schema = z.object({
 	email: z
@@ -30,21 +29,25 @@ const schema = z.object({
 });
 
 export async function loader({ request }: LoaderFunctionArgs) {
-	const session = await sessionStorage.getSession(
+	const authSession = await authSessionStorage.getSession(
 		request.headers.get('Cookie'),
 	);
-	const userId = session.get('userId');
+	const sessionId = authSession.get(sessionKey);
 
-	if (typeof userId === 'string') {
-		const user = await db.query.users
-			.findFirst({
-				where: eq(users.id, userId),
+	const sessionWithUser = sessionId
+		? await db.query.sessions.findFirst({
+				columns: { id: true },
+				where: (session, { eq, and, gt }) =>
+					and(
+						eq(session.id, sessionId),
+						gt(session.expirationDate, new UTCDate()),
+					),
+				with: { user: { columns: { id: true } } },
 			})
-			.catch(() => {});
+		: null;
 
-		if (user) {
-			return redirect('/');
-		}
+	if (sessionWithUser) {
+		return redirect('/');
 	}
 
 	return json({});
@@ -53,62 +56,44 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export async function action({ request }: ActionFunctionArgs) {
 	const formData = await request.formData();
 	const submission = await parseWithZod(formData, {
-		schema,
-		// schema: schema.superRefine(async (data, ctx) => {
-		// 	const user = await db.query.users.findFirst({
-		// 		where: (user, { eq }) => eq(user.email, data.email),
-		// 		with: { password: { columns: { hash: true } } },
-		// 	});
-		// 	console.log(user);
-		// 	const validPassword = bcrypt.compareSync(
-		// 		data.password,
-		// 		user?.password.hash ?? '',
-		// 	);
+		schema: intent =>
+			schema.transform(async (data, { addIssue }) => {
+				console.log('intent', intent);
+				if (intent !== null) return { ...data, session: null };
+				const session = await login(data);
 
-		// 	if (!user || !validPassword) {
-		// 		ctx.addIssue({
-		// 			code: z.ZodIssueCode.custom,
-		// 			path: ['form'],
-		// 			message: 'Invalid email or password.',
-		// 		});
-		// 		return;
-		// 	}
-		// }),
+				console.log('session', session);
+
+				if (!session) {
+					addIssue({
+						code: z.ZodIssueCode.custom,
+						message: 'Invalid email or password',
+					});
+					return z.NEVER;
+				}
+
+				return { ...data, session };
+			}),
 		async: true,
 	});
 
-	if (submission.status !== 'success') {
+	if (submission.status !== 'success' || !submission.value.session) {
 		return json(
-			{ data: submission.reply() },
+			{ data: submission.reply({ hideFields: ['password'] }) },
 			{ status: submission.status === 'error' ? 400 : 200 },
 		);
 	}
 
-	const { email, password } = submission.value;
-	const user = await db.query.users.findFirst({
-		where: (user, { eq }) => eq(user.email, email),
-		with: { password: { columns: { hash: true } } },
-	});
-	const passwordValid = bcrypt.compareSync(password, user?.password.hash ?? '');
+	const { session } = submission.value;
 
-	if (!user || !passwordValid) {
-		return json(
-			{
-				data: submission.reply({ formErrors: ['Invalid email or password'] }),
-			},
-			{ status: 400 },
-		);
-	}
-
-	const { id } = user;
-	const session = await sessionStorage.getSession(
+	const authSession = await authSessionStorage.getSession(
 		request.headers.get('cookie'),
 	);
-	session.set('userId', id);
+	authSession.set(sessionKey, session.id);
 
 	return redirect('/', {
 		headers: {
-			'Set-Cookie': await sessionStorage.commitSession(session),
+			'Set-Cookie': await authSessionStorage.commitSession(authSession),
 		},
 	});
 }

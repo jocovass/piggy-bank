@@ -10,6 +10,8 @@ import {
 	unique,
 	varchar,
 } from 'drizzle-orm/pg-core';
+import { createSelectSchema } from 'drizzle-zod';
+import { type z } from 'zod';
 
 export const users = pgTable('users', {
 	id: varchar('id', { length: 25 })
@@ -195,3 +197,8 @@ export const verifications = pgTable(
 		};
 	},
 );
+
+export const selectUserSchema = createSelectSchema(users);
+export const selectPasswordSchema = createSelectSchema(passwords);
+export type User = z.infer<typeof selectUserSchema>;
+export type Password = z.infer<typeof selectPasswordSchema>;
