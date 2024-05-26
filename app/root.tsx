@@ -37,16 +37,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			})
 		: null;
 
-	if (!sessionWithUser) {
-		return redirect('/login', {
+	if (sessionId && !sessionWithUser) {
+		return redirect('/', {
 			headers: {
-				'set-header': await authSessionStorage.destroySession(authSession),
+				'set-cookie': await authSessionStorage.destroySession(authSession),
 			},
 		});
 	}
 
 	return json(
-		{ data: sessionWithUser?.user },
+		{ user: sessionWithUser?.user },
 		{
 			headers: {
 				'set-cookie': await authSessionStorage.commitSession(authSession),
@@ -55,7 +55,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	);
 }
 
-export function Layout({ children }: { children: React.ReactNode }) {
+export function Document({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang="en">
 			<head>
@@ -74,5 +74,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-	return <Outlet />;
+	return (
+		<Document>
+			<Outlet />
+		</Document>
+	);
+}
+
+export function ErrorBoundary() {
+	return (
+		<Document>
+			<div className="flex items-center justify-center">
+				<h1 className="text-4xl">Something went wront!</h1>
+			</div>
+		</Document>
+	);
 }
