@@ -47,7 +47,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		: null;
 
 	if (sessionWithUser) {
-		return redirect('/');
+		return redirect('/', {
+			headers: {
+				'Set-Cookie': await authSessionStorage.destroySession(authSession),
+			},
+		});
 	}
 
 	return json({});
@@ -58,11 +62,8 @@ export async function action({ request }: ActionFunctionArgs) {
 	const submission = await parseWithZod(formData, {
 		schema: intent =>
 			schema.transform(async (data, { addIssue }) => {
-				console.log('intent', intent);
 				if (intent !== null) return { ...data, session: null };
 				const session = await login(data);
-
-				console.log('session', session);
 
 				if (!session) {
 					addIssue({
