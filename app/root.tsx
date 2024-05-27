@@ -45,14 +45,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		});
 	}
 
-	return json(
-		{ user: sessionWithUser?.user },
-		{
-			headers: {
-				'set-cookie': await authSessionStorage.commitSession(authSession),
-			},
-		},
-	);
+	return json({ user: sessionWithUser?.user });
 }
 
 export function Document({ children }: { children: React.ReactNode }) {

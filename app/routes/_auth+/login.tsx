@@ -94,7 +94,9 @@ export async function action({ request }: ActionFunctionArgs) {
 
 	return redirect('/', {
 		headers: {
-			'Set-Cookie': await authSessionStorage.commitSession(authSession),
+			'Set-Cookie': await authSessionStorage.commitSession(authSession, {
+				expires: undefined,
+			}),
 		},
 	});
 }
