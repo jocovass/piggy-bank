@@ -111,14 +111,14 @@ export async function action({ request }: ActionFunctionArgs) {
 		request.headers.get('Cookie'),
 	);
 
-	headers.set(
+	headers.append(
 		'Set-Cookie',
 		await authSessionStorage.commitSession(authSession, {
 			expires: remember ? session.expirationDate : undefined,
 		}),
 	);
 
-	headers.set(
+	headers.append(
 		'Set-Cookie',
 		await verifySessionStorage.destroySession(verifySession),
 	);
