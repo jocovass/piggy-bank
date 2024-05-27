@@ -26,4 +26,6 @@ export default {
 		},
 	],
 	plugins: ['prettier-plugin-tailwindcss'],
+	tailwindAttributes: ['class', 'className', 'ngClass', '.*[cC]lassName'],
+	tailwindFunctions: ['clsx', 'cn'],
 };

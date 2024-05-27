@@ -1,7 +1,18 @@
 import { UTCDate } from '@date-fns/utc';
+import { redirect } from '@remix-run/node';
 import bcrypt from 'bcryptjs';
+import { eq } from 'drizzle-orm';
+import { type z } from 'zod';
+import { type schema as signupScheam } from '~/app/routes/_auth+/onboarding';
 import { db } from '~/db/index.server';
-import { type User, type Password, sessions } from '~/db/schema';
+import {
+	type User,
+	type Password,
+	sessions,
+	users,
+	passwords,
+} from '~/db/schema';
+import { authSessionStorage } from './session.server';
 
 export const SESSION_EXPIRATION_TIME = 1000 * 60 * 60 * 24 * 30;
 export const getSessionExpirationDate = () =>
@@ -9,7 +20,7 @@ export const getSessionExpirationDate = () =>
 
 export const sessionKey = 'auth_session';
 
-export async function login({
+export async function createLoginSession({
 	email,
 	password,
 }: {
@@ -30,6 +41,45 @@ export async function login({
 		.returning();
 
 	return session[0];
+}
+
+export type SignupArgs = z.infer<typeof signupScheam> & {
+	email: User['email'];
+};
+export async function signup({
+	email,
+	firstName,
+	lastName,
+	password,
+}: SignupArgs) {
+	const hash = await bcrypt.hash(password, 10);
+	const session = await db.transaction(async tx => {
+		const [newUser] = await tx
+			.insert(users)
+			.values({
+				email,
+				firstName,
+				lastName,
+			})
+			.returning();
+
+		await tx.insert(passwords).values({
+			hash,
+			userId: newUser.id,
+		});
+
+		const [session] = await tx
+			.insert(sessions)
+			.values({
+				expirationDate: getSessionExpirationDate(),
+				userId: newUser.id,
+			})
+			.returning();
+
+		return session;
+	});
+
+	return session;
 }
 
 export async function verifyPassword({
@@ -55,4 +105,69 @@ export async function verifyPassword({
 	}
 
 	return user;
+}
+
+export async function getSessionWithUser(sessionId: string) {
+	return await db.query.sessions.findFirst({
+		columns: { id: true },
+		where: (session, { eq, and, gt }) =>
+			and(eq(session.id, sessionId), gt(session.expirationDate, new UTCDate())),
+		with: { user: true },
+	});
+}
+
+export async function getUserFromSession(request: Request) {
+	const authSession = await authSessionStorage.getSession(
+		request.headers.get('cookie'),
+	);
+	const sessionId = authSession.get(sessionKey);
+
+	const sessionWithUser = sessionId
+		? await getSessionWithUser(sessionId)
+		: null;
+
+	if (sessionId && (!sessionWithUser || !sessionWithUser?.user)) {
+		throw redirect('/', {
+			headers: {
+				'set-cookie': await authSessionStorage.destroySession(authSession),
+			},
+		});
+	}
+
+	return sessionWithUser?.user;
+}
+
+export async function requireAnonymus(request: Request) {
+	const authSession = await authSessionStorage.getSession(
+		request.headers.get('Cookie'),
+	);
+	const sessionId = authSession.get(sessionKey);
+
+	if (!sessionId) {
+		return;
+	}
+
+	const sessionWithUser = sessionId
+		? await getSessionWithUser(sessionId)
+		: null;
+
+	if (sessionWithUser && sessionWithUser.user) {
+		throw redirect('/');
+	}
+
+	/**
+	 * If a session exists but does not belong to any user, we want to delete the
+	 * session from the database to remove any dangling session records.
+	 */
+	if (sessionWithUser && !sessionWithUser.user) {
+		await db.delete(sessions).where(eq(sessions.id, sessionId));
+
+		throw redirect('/', {
+			headers: {
+				'Set-Cookie': await authSessionStorage.destroySession(authSession),
+			},
+		});
+	}
+
+	return;
 }

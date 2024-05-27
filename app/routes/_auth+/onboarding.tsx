@@ -6,16 +6,22 @@ import {
 	json,
 	redirect,
 } from '@remix-run/node';
-import { Form, useActionData, useLoaderData } from '@remix-run/react';
-import bcrypt from 'bcryptjs';
+import {
+	Form,
+	useActionData,
+	useLoaderData,
+	useSearchParams,
+} from '@remix-run/react';
+import { safeRedirect } from 'remix-utils/safe-redirect';
 import { z } from 'zod';
 import { Field } from '~/app/components/forms';
 import { Button } from '~/app/components/ui/button';
+import { sessionKey, signup } from '~/app/utils/auth.server';
+import { authSessionStorage } from '~/app/utils/session.server';
 import { verifySessionStorage } from '~/app/utils/verification.server';
-import { db } from '~/db/index.server';
-import { passwords, users } from '~/db/schema';
+import { verifyRedirectToParamKey } from './verify';
 
-const schema = z
+export const schema = z
 	.object({
 		firstName: z
 			.string({ required_error: 'First name is required' })
@@ -33,6 +39,8 @@ const schema = z
 		confirmPassword: z.string({
 			required_error: 'Confirm passowrd is required',
 		}),
+		remember: z.boolean().optional(),
+		redirectTo: z.string().optional(),
 	})
 	.superRefine(({ confirmPassword, password }, ctx) => {
 		if (confirmPassword !== password) {
@@ -46,72 +54,88 @@ const schema = z
 
 export const onboardingEmailSessionKey = 'onboardingEmail';
 
-export async function loader({ request }: LoaderFunctionArgs) {
+async function getEmailFromSession(request: Request) {
 	const verifySession = await verifySessionStorage.getSession(
 		request.headers.get('Cookie'),
 	);
 	const email = verifySession.get(onboardingEmailSessionKey);
 
 	if (typeof email !== 'string') {
-		return redirect('/signup');
+		throw redirect('/signup', {
+			headers: {
+				'Set-Cookie': await verifySessionStorage.destroySession(verifySession),
+			},
+		});
 	}
 
+	return email;
+}
+
+export async function loader({ request }: LoaderFunctionArgs) {
+	const email = await getEmailFromSession(request);
 	return json({ email });
 }
 
 export async function action({ request }: ActionFunctionArgs) {
 	const formData = await request.formData();
+	const email = await getEmailFromSession(request);
+
 	const submission = await parseWithZod(formData, {
-		schema,
+		schema: intent =>
+			schema.transform(async (data, ctx) => {
+				if (intent !== null) return { ...data, session: null };
+
+				const session = await signup({ ...data, email });
+
+				return { ...data, session };
+			}),
 		async: true,
 	});
 
-	if (submission.status !== 'success') {
+	if (submission.status !== 'success' || !submission.value.session) {
 		return json(
 			{ data: submission.reply() },
 			{ status: submission.status === 'error' ? 400 : 200 },
 		);
 	}
 
-	// Grab the email from the verify session, this was saved
+	const { redirectTo, remember, session } = submission.value;
+	const headers = new Headers();
+
+	const authSession = await authSessionStorage.getSession(
+		request.headers.get('Cookie'),
+	);
+	authSession.set(sessionKey, session.id);
+
 	const verifySession = await verifySessionStorage.getSession(
 		request.headers.get('Cookie'),
 	);
-	const email = verifySession.get(onboardingEmailSessionKey);
-	if (typeof email !== 'string') {
-		return redirect('/signup');
-	}
 
-	const { firstName, lastName, password } = submission.value;
-	const hash = await bcrypt.hash(password, 10);
+	headers.set(
+		'Set-Cookie',
+		await authSessionStorage.commitSession(authSession, {
+			expires: remember ? session.expirationDate : undefined,
+		}),
+	);
 
-	await db.transaction(async tx => {
-		const [newUser] = await tx
-			.insert(users)
-			.values({
-				email,
-				firstName,
-				lastName,
-			})
-			.returning();
+	headers.set(
+		'Set-Cookie',
+		await verifySessionStorage.destroySession(verifySession),
+	);
 
-		await tx.insert(passwords).values({
-			hash,
-			userId: newUser.id,
-		});
-
-		return newUser;
+	return redirect(safeRedirect(redirectTo), {
+		headers,
 	});
-
-	return redirect('/');
 }
 
 export default function OnboardingRoute() {
 	const data = useLoaderData<typeof loader>();
 	const actionData = useActionData<typeof action>();
+	const [searchParams] = useSearchParams();
 	const [form, fields] = useForm({
 		id: 'onboarding-form',
 		constraint: getZodConstraint(schema),
+		defaultValue: { redirectTo: searchParams.get(verifyRedirectToParamKey) },
 		lastResult: actionData?.data,
 		onValidate({ formData }) {
 			return parseWithZod(formData, { schema });
@@ -164,6 +188,8 @@ export default function OnboardingRoute() {
 							htmlFor: fields.confirmPassword.id,
 						}}
 					/>
+
+					<input {...getInputProps(fields.redirectTo, { type: 'hidden' })} />
 
 					<Button type="submit">Submit</Button>
 				</Form>
