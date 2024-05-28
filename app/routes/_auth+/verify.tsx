@@ -28,30 +28,17 @@ export const verifyTargetParamKey = 'target';
 export const verifyRedirectToParamKey = 'redirectTo';
 export const verifyCodeParamKey = 'otp';
 
-const otp = z.object({
+const schema = z.object({
 	otp: z.string().min(6).max(6),
+	target: z.string(),
+	type: z.string(),
+	redirectTo: z.string().optional(),
 });
-
-const frontendSchema = otp.merge(
-	z.object({
-		target: z.string().optional(),
-		type: z.string().optional(),
-		redirectTo: z.string().optional(),
-	}),
-);
-
-const backendSchema = otp.merge(
-	z.object({
-		target: z.string(),
-		type: z.string(),
-		redirectTo: z.string(),
-	}),
-);
 
 export async function action({ request }: ActionFunctionArgs) {
 	const formData = await request.formData();
 	const submission = await parseWithZod(formData, {
-		schema: backendSchema.superRefine(async (data, ctx) => {
+		schema: schema.superRefine(async (data, ctx) => {
 			const verification = await db.query.verifications.findFirst({
 				columns: {
 					algorithm: true,
@@ -123,15 +110,15 @@ export default function Verify() {
 	const actionData = useActionData<typeof action>();
 	const [searchParams] = useSearchParams();
 	const [form, fields] = useForm({
-		constraint: getZodConstraint(frontendSchema),
+		constraint: getZodConstraint(schema),
 		defaultValue: {
-			target: searchParams.get('target'),
-			type: searchParams.get('type'),
-			redirectTo: searchParams.get('type'),
+			target: searchParams.get(verifyTargetParamKey),
+			type: searchParams.get(verifyTypeParamKey),
+			redirectTo: searchParams.get(verifyRedirectToParamKey),
 		},
 		lastResult: actionData?.data,
 		onValidate({ formData }) {
-			return parseWithZod(formData, { schema: frontendSchema });
+			return parseWithZod(formData, { schema });
 		},
 		shouldValidate: 'onBlur',
 		shouldRevalidate: 'onInput',

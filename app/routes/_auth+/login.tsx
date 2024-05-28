@@ -1,6 +1,5 @@
 import { useForm, getFormProps, getInputProps } from '@conform-to/react';
 import { parseWithZod, getZodConstraint } from '@conform-to/zod';
-import { UTCDate } from '@date-fns/utc';
 import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
@@ -11,9 +10,12 @@ import { Form, useActionData } from '@remix-run/react';
 import { z } from 'zod';
 import { Field } from '~/app/components/forms';
 import { Button } from '~/app/components/ui/button';
-import { login, sessionKey } from '~/app/utils/auth.server';
+import {
+	createLoginSession,
+	requireAnonymus,
+	sessionKey,
+} from '~/app/utils/auth.server';
 import { authSessionStorage } from '~/app/utils/session.server';
-import { db } from '~/db/index.server';
 
 const schema = z.object({
 	email: z
@@ -26,34 +28,11 @@ const schema = z.object({
 		.regex(/[a-z]/, 'Must contain uppercase letter')
 		.regex(/[0-9]/, 'Must contain number')
 		.regex(/[.*[!#$%&?]/, 'Must contain special character'),
+	remember: z.boolean().optional(),
 });
 
 export async function loader({ request }: LoaderFunctionArgs) {
-	const authSession = await authSessionStorage.getSession(
-		request.headers.get('Cookie'),
-	);
-	const sessionId = authSession.get(sessionKey);
-
-	const sessionWithUser = sessionId
-		? await db.query.sessions.findFirst({
-				columns: { id: true },
-				where: (session, { eq, and, gt }) =>
-					and(
-						eq(session.id, sessionId),
-						gt(session.expirationDate, new UTCDate()),
-					),
-				with: { user: { columns: { id: true } } },
-			})
-		: null;
-
-	if (sessionWithUser) {
-		return redirect('/', {
-			headers: {
-				'Set-Cookie': await authSessionStorage.destroySession(authSession),
-			},
-		});
-	}
-
+	await requireAnonymus(request);
 	return json({});
 }
 
@@ -63,7 +42,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		schema: intent =>
 			schema.transform(async (data, { addIssue }) => {
 				if (intent !== null) return { ...data, session: null };
-				const session = await login(data);
+				const session = await createLoginSession(data);
 
 				if (!session) {
 					addIssue({
@@ -85,7 +64,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		);
 	}
 
-	const { session } = submission.value;
+	const { session, remember } = submission.value;
 
 	const authSession = await authSessionStorage.getSession(
 		request.headers.get('cookie'),
@@ -95,7 +74,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	return redirect('/', {
 		headers: {
 			'Set-Cookie': await authSessionStorage.commitSession(authSession, {
-				expires: undefined,
+				expires: remember ? session.expirationDate : undefined,
 			}),
 		},
 	});
