@@ -10,8 +10,10 @@ import {
 	Scripts,
 	ScrollRestoration,
 } from '@remix-run/react';
+import { Toaster } from '~/app/components/ui/sonner';
 import tailwindCss from '~/app/styles/tailwind.css?url';
 import { getUserFromSession } from './utils/auth.server';
+import { getToastFromRequest } from './utils/toast.server';
 
 export const links: LinksFunction = () => {
 	return [{ rel: 'stylesheet', href: tailwindCss }];
@@ -19,7 +21,11 @@ export const links: LinksFunction = () => {
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const user = await getUserFromSession(request);
-	return json({ user });
+	const { toast, toastHeader } = await getToastFromRequest(request);
+	return json(
+		{ user, toast },
+		{ headers: toastHeader ? { 'Set-Cookie': toastHeader } : undefined },
+	);
 }
 
 export function Document({ children }: { children: React.ReactNode }) {
@@ -35,6 +41,7 @@ export function Document({ children }: { children: React.ReactNode }) {
 				{children}
 				<ScrollRestoration />
 				<Scripts />
+				<Toaster position="bottom-right" />
 			</body>
 		</html>
 	);

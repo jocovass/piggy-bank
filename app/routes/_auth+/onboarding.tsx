@@ -18,6 +18,7 @@ import { Field } from '~/app/components/forms';
 import { Button } from '~/app/components/ui/button';
 import { sessionKey, signup } from '~/app/utils/auth.server';
 import { authSessionStorage } from '~/app/utils/session.server';
+import { redirectWithToast } from '~/app/utils/toast.server';
 import { verifySessionStorage } from '~/app/utils/verification.server';
 import { verifyRedirectToParamKey } from './verify';
 
@@ -99,7 +100,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		);
 	}
 
-	const { redirectTo, remember, session } = submission.value;
+	const { redirectTo, remember, session, firstName } = submission.value;
 	const headers = new Headers();
 
 	const authSession = await authSessionStorage.getSession(
@@ -123,9 +124,14 @@ export async function action({ request }: ActionFunctionArgs) {
 		await verifySessionStorage.destroySession(verifySession),
 	);
 
-	return redirect(safeRedirect(redirectTo), {
-		headers,
-	});
+	return redirectWithToast(
+		safeRedirect(redirectTo),
+		{
+			title: 'Welcome onboard!',
+			description: `Hi ${firstName} hope you have fun using Piggy Bank`,
+		},
+		{ headers },
+	);
 }
 
 export default function OnboardingRoute() {

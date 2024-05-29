@@ -2,6 +2,7 @@ import { type MetaFunction } from '@remix-run/node';
 import { Form, NavLink, useRouteLoaderData } from '@remix-run/react';
 import { Button } from '~/app/components/ui/button';
 import { type loader as rootLoader } from '~/app/root';
+import { useToast } from '~/app/utils/toaster';
 
 export const meta: MetaFunction = () => {
 	return [
@@ -12,6 +13,7 @@ export const meta: MetaFunction = () => {
 
 export default function Index() {
 	const rootData = useRouteLoaderData<typeof rootLoader>('root');
+	useToast(rootData?.toast);
 
 	return (
 		<div className="p-5">

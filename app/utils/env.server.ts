@@ -6,6 +6,7 @@ const schema = z.object({
 	MOCK: z.boolean().default(false),
 	RESEND_API_KEY: z.string(),
 	AUTH_SESSION_SECRET: z.string(),
+	TOAST_SESSION_SECRET: z.string(),
 	VERIFICATION_SESSION_SECRET: z.string(),
 });
 
