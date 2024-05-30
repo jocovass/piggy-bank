@@ -41,7 +41,6 @@ export function Document({ children }: { children: React.ReactNode }) {
 				{children}
 				<ScrollRestoration />
 				<Scripts />
-				<Toaster position="bottom-right" />
 			</body>
 		</html>
 	);
@@ -51,6 +50,7 @@ export default function App() {
 	return (
 		<Document>
 			<Outlet />
+			<Toaster position="bottom-right" />
 		</Document>
 	);
 }
