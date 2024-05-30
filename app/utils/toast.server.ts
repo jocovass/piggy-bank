@@ -35,7 +35,7 @@ export function combineHeaders(
 	for (const header of headers) {
 		if (!header) continue;
 		for (const [key, value] of new Headers(header).entries()) {
-			mergedHeaders.set(key, value);
+			mergedHeaders.append(key, value);
 		}
 	}
 	return mergedHeaders;
