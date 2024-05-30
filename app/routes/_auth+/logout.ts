@@ -18,8 +18,6 @@ export async function action({ request }: ActionFunctionArgs) {
 		await db.delete(sessions).where(eq(sessions.id, sessionId));
 	}
 
-	console.log('Logging out session: ', sessionId);
-
 	return redirect('/', {
 		headers: {
 			'Set-Cookie': await authSessionStorage.destroySession(authSession),
