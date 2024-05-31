@@ -1,6 +1,6 @@
-import { createId as cuid } from '@paralleldrive/cuid2';
 import { createCookieSessionStorage, redirect } from '@remix-run/node';
-import { z } from 'zod';
+import { type z } from 'zod';
+import { ServerToastSchema } from './validation-schemas';
 
 export const toastSessionStorage = createCookieSessionStorage({
 	cookie: {
@@ -15,18 +15,8 @@ export const toastSessionStorage = createCookieSessionStorage({
 
 export const toastSessionKey = 'pg_toast_key';
 
-export const ToastSchema = z.object({
-	description: z.string().optional(),
-	id: z
-		.string()
-		.optional()
-		.default(() => cuid()),
-	title: z.string(),
-	type: z.enum(['message', 'success', 'error']).default('message'),
-});
-
-export type ServerToast = z.infer<typeof ToastSchema>;
-export type ServerToastInput = z.input<typeof ToastSchema>;
+export type ServerToast = z.infer<typeof ServerToastSchema>;
+export type ServerToastInput = z.input<typeof ServerToastSchema>;
 
 export function combineHeaders(
 	...headers: (ResponseInit['headers'] | undefined | null)[]
@@ -55,7 +45,7 @@ export async function redirectWithToast(
 
 export async function createToastHeader(toastInput: ServerToastInput) {
 	const toastSession = await toastSessionStorage.getSession();
-	const parsedData = await ToastSchema.safeParseAsync(toastInput);
+	const parsedData = await ServerToastSchema.safeParseAsync(toastInput);
 	if (parsedData.success) {
 		toastSession.flash(toastSessionKey, parsedData.data);
 	}
@@ -71,7 +61,7 @@ export async function getToastFromRequest(request: Request) {
 	const toastSession = await toastSessionStorage.getSession(
 		request.headers.get('Cookie'),
 	);
-	const result = await ToastSchema.safeParseAsync(
+	const result = await ServerToastSchema.safeParseAsync(
 		toastSession.get(toastSessionKey),
 	);
 	const toastInput = result.success ? result.data : null;

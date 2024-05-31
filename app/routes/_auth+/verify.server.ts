@@ -1,6 +1,8 @@
 import { UTCDate } from '@date-fns/utc';
 import { generateTOTP } from '@epic-web/totp';
+import { type z } from 'zod';
 import { getOriginUrl } from '~/app/utils/misc';
+import { type VerificationTypeSchema } from '~/app/utils/validation-schemas';
 import { verificationMaxAge } from '~/app/utils/verification.server';
 import { db } from '~/db/index.server';
 import { verifications } from '~/db/schema';
@@ -11,11 +13,7 @@ import {
 	verifyTypeParamKey,
 } from './verify';
 
-export type VerificationTypes =
-	| 'onboarding'
-	| '2fa'
-	| 'reset-password'
-	| 'reset-email';
+export type VerificationTypes = z.infer<typeof VerificationTypeSchema>;
 
 export type GenerateRedirectUrl = {
 	redirectUrl?: string;

@@ -18,6 +18,7 @@ import {
 	InputOTPGroup,
 	InputOTPSlot,
 } from '~/app/components/ui/input-otp';
+import { VerifySchema } from '~/app/utils/validation-schemas';
 import { verifySessionStorage } from '~/app/utils/verification.server';
 import { db } from '~/db/index.server';
 import { verifications } from '~/db/schema';
@@ -27,18 +28,17 @@ export const verifyTypeParamKey = 'type';
 export const verifyTargetParamKey = 'target';
 export const verifyRedirectToParamKey = 'redirectTo';
 export const verifyCodeParamKey = 'otp';
-
-const schema = z.object({
-	otp: z.string().min(6).max(6),
-	target: z.string(),
-	type: z.string(),
-	redirectTo: z.string().optional(),
-});
+export const type = [
+	'onboarding',
+	'2fa',
+	'reset-password',
+	'change-email',
+] as const;
 
 export async function action({ request }: ActionFunctionArgs) {
 	const formData = await request.formData();
 	const submission = await parseWithZod(formData, {
-		schema: schema.superRefine(async (data, ctx) => {
+		schema: VerifySchema.superRefine(async (data, ctx) => {
 			const verification = await db.query.verifications.findFirst({
 				columns: {
 					algorithm: true,
@@ -110,7 +110,7 @@ export default function Verify() {
 	const actionData = useActionData<typeof action>();
 	const [searchParams] = useSearchParams();
 	const [form, fields] = useForm({
-		constraint: getZodConstraint(schema),
+		constraint: getZodConstraint(VerifySchema),
 		defaultValue: {
 			target: searchParams.get(verifyTargetParamKey),
 			type: searchParams.get(verifyTypeParamKey),
@@ -118,7 +118,7 @@ export default function Verify() {
 		},
 		lastResult: actionData?.data,
 		onValidate({ formData }) {
-			return parseWithZod(formData, { schema });
+			return parseWithZod(formData, { schema: VerifySchema });
 		},
 		shouldValidate: 'onBlur',
 		shouldRevalidate: 'onInput',
