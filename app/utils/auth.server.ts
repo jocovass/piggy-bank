@@ -3,7 +3,6 @@ import { redirect } from '@remix-run/node';
 import bcrypt from 'bcryptjs';
 import { eq } from 'drizzle-orm';
 import { type z } from 'zod';
-import { type schema as signupScheam } from '~/app/routes/_auth+/onboarding';
 import { db } from '~/db/index.server';
 import {
 	type User,
@@ -13,6 +12,7 @@ import {
 	passwords,
 } from '~/db/schema';
 import { authSessionStorage } from './session.server';
+import { type OnboardingSchema } from './validation-schemas';
 
 export const SESSION_EXPIRATION_TIME = 1000 * 60 * 60 * 24 * 30;
 export const getSessionExpirationDate = () =>
@@ -43,7 +43,7 @@ export async function createLoginSession({
 	return session[0];
 }
 
-export type SignupArgs = z.infer<typeof signupScheam> & {
+export type SignupArgs = z.infer<typeof OnboardingSchema> & {
 	email: User['email'];
 };
 export async function signup({
