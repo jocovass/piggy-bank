@@ -16,20 +16,7 @@ import {
 	sessionKey,
 } from '~/app/utils/auth.server';
 import { authSessionStorage } from '~/app/utils/session.server';
-
-const schema = z.object({
-	email: z
-		.string({ required_error: 'Email is required' })
-		.email('Email is invalid'),
-	password: z
-		.string({ required_error: 'Password is required' })
-		.min(8, 'Must be at least 8 character')
-		.regex(/[A-Z]/, 'Must contain uppercase letter')
-		.regex(/[a-z]/, 'Must contain uppercase letter')
-		.regex(/[0-9]/, 'Must contain number')
-		.regex(/[.*[!#$%&?]/, 'Must contain special character'),
-	remember: z.boolean().optional(),
-});
+import { LoginSchema } from '~/app/utils/validation-schemas';
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	await requireAnonymus(request);
@@ -40,7 +27,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	const formData = await request.formData();
 	const submission = await parseWithZod(formData, {
 		schema: intent =>
-			schema.transform(async (data, { addIssue }) => {
+			LoginSchema.transform(async (data, { addIssue }) => {
 				if (intent !== null) return { ...data, session: null };
 				const session = await createLoginSession(data);
 
@@ -84,10 +71,10 @@ export default function LoginRoute() {
 	const actionData = useActionData<typeof action>();
 	const [form, fields] = useForm({
 		id: 'login-form',
-		constraint: getZodConstraint(schema),
+		constraint: getZodConstraint(LoginSchema),
 		lastResult: actionData?.data,
 		onValidate({ formData }) {
-			return parseWithZod(formData, { schema });
+			return parseWithZod(formData, { schema: LoginSchema });
 		},
 		shouldValidate: 'onBlur',
 		shouldRevalidate: 'onInput',

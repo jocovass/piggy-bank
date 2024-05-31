@@ -7,19 +7,14 @@ import { Field } from '~/app/components/forms';
 import { Button } from '~/app/components/ui/button';
 import { sendEmail } from '~/app/utils/email.server';
 import { SignupEmail } from '~/app/utils/emailTemplates';
+import { SignupSchema } from '~/app/utils/validation-schemas';
 import { db } from '~/db/index.server';
 import { prepareOtpVerification } from './verify.server';
-
-const schema = z.object({
-	email: z
-		.string({ required_error: 'Email is required' })
-		.email('Email is invalid'),
-});
 
 export async function action({ request }: ActionFunctionArgs) {
 	const formData = await request.formData();
 	const submission = await parseWithZod(formData, {
-		schema: schema.superRefine(async (data, ctx) => {
+		schema: SignupSchema.superRefine(async (data, ctx) => {
 			const existingUser = await db.query.users.findFirst({
 				columns: { id: true },
 				where: (user, { eq }) => eq(user.email, data.email),
@@ -72,10 +67,10 @@ export default function SignupRoute() {
 	const actionData = useActionData<typeof action>();
 	const [form, fields] = useForm({
 		id: 'signup-form',
-		constraint: getZodConstraint(schema),
+		constraint: getZodConstraint(SignupSchema),
 		lastResult: actionData?.data,
 		onValidate({ formData }) {
-			return parseWithZod(formData, { schema });
+			return parseWithZod(formData, { schema: SignupSchema });
 		},
 		shouldValidate: 'onBlur',
 		shouldRevalidate: 'onInput',

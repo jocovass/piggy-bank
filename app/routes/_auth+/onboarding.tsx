@@ -13,45 +13,14 @@ import {
 	useSearchParams,
 } from '@remix-run/react';
 import { safeRedirect } from 'remix-utils/safe-redirect';
-import { z } from 'zod';
 import { Field } from '~/app/components/forms';
 import { Button } from '~/app/components/ui/button';
 import { sessionKey, signup } from '~/app/utils/auth.server';
 import { authSessionStorage } from '~/app/utils/session.server';
 import { redirectWithToast } from '~/app/utils/toast.server';
+import { OnboardingSchema } from '~/app/utils/validation-schemas';
 import { verifySessionStorage } from '~/app/utils/verification.server';
 import { verifyRedirectToParamKey } from './verify';
-
-export const schema = z
-	.object({
-		firstName: z
-			.string({ required_error: 'First name is required' })
-			.min(3, 'Must be at least 3 charcter'),
-		lastName: z
-			.string({ required_error: 'Last name is required' })
-			.min(3, 'Must be at least 3 charcter'),
-		password: z
-			.string({ required_error: 'Password is required' })
-			.min(8, 'Must be at least 8 character')
-			.regex(/[A-Z]/, 'Must contain uppercase letter')
-			.regex(/[a-z]/, 'Must contain uppercase letter')
-			.regex(/[0-9]/, 'Must contain number')
-			.regex(/[.*[!#$%&?]/, 'Must contain special character'),
-		confirmPassword: z.string({
-			required_error: 'Confirm passowrd is required',
-		}),
-		remember: z.boolean().optional(),
-		redirectTo: z.string().optional(),
-	})
-	.superRefine(({ confirmPassword, password }, ctx) => {
-		if (confirmPassword !== password) {
-			ctx.addIssue({
-				code: 'custom',
-				message: 'Passwords must match',
-				path: ['confirmPassword'],
-			});
-		}
-	});
 
 export const onboardingEmailSessionKey = 'onboardingEmail';
 
@@ -83,7 +52,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
 	const submission = await parseWithZod(formData, {
 		schema: intent =>
-			schema.transform(async (data, ctx) => {
+			OnboardingSchema.transform(async (data, ctx) => {
 				if (intent !== null) return { ...data, session: null };
 
 				const session = await signup({ ...data, email });
@@ -140,11 +109,11 @@ export default function OnboardingRoute() {
 	const [searchParams] = useSearchParams();
 	const [form, fields] = useForm({
 		id: 'onboarding-form',
-		constraint: getZodConstraint(schema),
+		constraint: getZodConstraint(OnboardingSchema),
 		defaultValue: { redirectTo: searchParams.get(verifyRedirectToParamKey) },
 		lastResult: actionData?.data,
 		onValidate({ formData }) {
-			return parseWithZod(formData, { schema });
+			return parseWithZod(formData, { schema: OnboardingSchema });
 		},
 		shouldValidate: 'onBlur',
 		shouldRevalidate: 'onInput',
