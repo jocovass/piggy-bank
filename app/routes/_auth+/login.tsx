@@ -104,6 +104,10 @@ export default function LoginRoute() {
 
 					<Button type="submit">Submit</Button>
 				</Form>
+
+				<Form action="/auth/github" method="POST">
+					<Button>Login with GitHub</Button>
+				</Form>
 			</div>
 		</div>
 	);

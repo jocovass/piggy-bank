@@ -2,6 +2,8 @@ import { UTCDate } from '@date-fns/utc';
 import { redirect } from '@remix-run/node';
 import bcrypt from 'bcryptjs';
 import { eq } from 'drizzle-orm';
+import { Authenticator } from 'remix-auth';
+import { GitHubStrategy } from 'remix-auth-github';
 import { type z } from 'zod';
 import { db } from '~/db/index.server';
 import {
@@ -11,8 +13,37 @@ import {
 	users,
 	passwords,
 } from '~/db/schema';
+import { connectionSessionStorage } from './connection.server';
 import { authSessionStorage } from './session.server';
 import { type OnboardingSchema } from './validation-schemas';
+
+export const authenticator = new Authenticator<User>(connectionSessionStorage);
+
+let gitHubStrategy = new GitHubStrategy(
+	{
+		clientID: process.env.GITHUB_CLIENT_ID,
+		clientSecret: process.env.GITHUB_CLIENT_SECRET,
+		callbackURL: 'http://127.0.0.1:3000/auth/github/callback',
+	},
+	async ({ accessToken, extraParams, profile }) => {
+		// Get the user data from your DB or API using the tokens and profile
+		// return User.findOrCreate({ email: profile.emails[0].value });
+		console.log('accessToken', accessToken);
+		console.log('extraParams', extraParams);
+		console.log('profile', profile);
+
+		return {
+			id: '123',
+			email: 'test@example.com',
+			firstName: 'Test',
+			lastName: 'User',
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		};
+	},
+);
+
+authenticator.use(gitHubStrategy);
 
 export const SESSION_EXPIRATION_TIME = 1000 * 60 * 60 * 24 * 30;
 export const getSessionExpirationDate = () =>
