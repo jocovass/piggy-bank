@@ -6,5 +6,5 @@ export async function loader() {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-	return await authenticator.authenticate('github', request);
+	return authenticator.authenticate('github', request);
 }

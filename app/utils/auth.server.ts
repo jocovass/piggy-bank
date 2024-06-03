@@ -17,33 +17,35 @@ import { connectionSessionStorage } from './connection.server';
 import { authSessionStorage } from './session.server';
 import { type OnboardingSchema } from './validation-schemas';
 
-export const authenticator = new Authenticator<User>(connectionSessionStorage);
+export type ProviderUser = {
+	id: string;
+	email: string;
+	firstName: string;
+	lastName: string;
+	avatarUrl: string;
+};
+export const authenticator = new Authenticator<ProviderUser>(
+	connectionSessionStorage,
+);
 
 let gitHubStrategy = new GitHubStrategy(
 	{
 		clientID: process.env.GITHUB_CLIENT_ID,
 		clientSecret: process.env.GITHUB_CLIENT_SECRET,
-		callbackURL: 'http://127.0.0.1:3000/auth/github/callback',
+		callbackURL: 'http://localhost:3000/auth/github/callback',
 	},
-	async ({ accessToken, extraParams, profile }) => {
-		// Get the user data from your DB or API using the tokens and profile
-		// return User.findOrCreate({ email: profile.emails[0].value });
-		console.log('accessToken', accessToken);
-		console.log('extraParams', extraParams);
-		console.log('profile', profile);
-
+	async ({ profile }) => {
 		return {
-			id: '123',
-			email: 'test@example.com',
-			firstName: 'Test',
-			lastName: 'User',
-			createdAt: new Date(),
-			updatedAt: new Date(),
+			id: profile.id,
+			email: profile.emails[0].value,
+			firstName: profile.name.givenName.split(' ')[0],
+			lastName: profile.name.givenName.split(' ')[1],
+			avatarUrl: profile.photos[0].value,
 		};
 	},
 );
 
-authenticator.use(gitHubStrategy);
+authenticator.use(gitHubStrategy, 'github');
 
 export const SESSION_EXPIRATION_TIME = 1000 * 60 * 60 * 24 * 30;
 export const getSessionExpirationDate = () =>
