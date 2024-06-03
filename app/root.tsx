@@ -9,6 +9,7 @@ import {
 	Outlet,
 	Scripts,
 	ScrollRestoration,
+	useRouteError,
 } from '@remix-run/react';
 import { Toaster } from '~/app/components/ui/sonner';
 import tailwindCss from '~/app/styles/tailwind.css?url';
@@ -56,10 +57,12 @@ export default function App() {
 }
 
 export function ErrorBoundary() {
+	const error = useRouteError();
 	return (
 		<Document>
 			<div className="flex items-center justify-center">
 				<h1 className="text-4xl">Something went wront!</h1>
+				<pre>{JSON.stringify(error, null, 2)}</pre>
 			</div>
 		</Document>
 	);

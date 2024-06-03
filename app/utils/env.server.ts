@@ -2,10 +2,13 @@ import { z } from 'zod';
 
 const schema = z.object({
 	DB_URL: z.string(),
+	GITHUB_CLIENT_ID: z.string(),
+	GITHUB_CLIENT_SECRET: z.string(),
 	NODE_ENV: z.enum(['production', 'development', 'test'] as const),
 	MOCK: z.boolean().default(false),
 	RESEND_API_KEY: z.string(),
 	AUTH_SESSION_SECRET: z.string(),
+	CONNECTION_SESSION_SECRET: z.string(),
 	TOAST_SESSION_SECRET: z.string(),
 	VERIFICATION_SESSION_SECRET: z.string(),
 });
