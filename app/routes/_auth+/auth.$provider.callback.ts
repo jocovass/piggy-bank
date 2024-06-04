@@ -6,25 +6,39 @@ import {
 	getUserFromSession,
 	sessionKey,
 } from '~/app/utils/auth.server';
+import { destroyRedirectToHeader } from '~/app/utils/redirect-cookie.server';
 import { authSessionStorage } from '~/app/utils/session.server';
-import { redirectWithToast } from '~/app/utils/toast.server';
+import {
+	combineHeaders,
+	createToastHeader,
+	redirectWithToast,
+} from '~/app/utils/toast.server';
 import { db } from '~/db/index.server';
 import { connections, sessions, users } from '~/db/schema';
+import { ProviderNameSchema } from './auth.$provider';
 
-export async function loader({ request }: LoaderFunctionArgs) {
+const destroyRedirectTo = { 'Set-Cookie': destroyRedirectToHeader };
+
+export async function loader({ request, params }: LoaderFunctionArgs) {
+	const provider = ProviderNameSchema.parse(params.provider);
+
 	const result = await authenticator
-		.authenticate('github', request, {
+		.authenticate(provider, request, {
 			throwOnError: true,
 		})
 		.then(profile => ({ success: true, profile }) as const)
 		.catch(error => ({ success: false, error }) as const);
 
 	if (!result.success) {
-		throw redirectWithToast('/login', {
-			title: 'Auth failed',
-			description: 'There was an error authenticating with "github".',
-			type: 'error',
-		});
+		throw redirectWithToast(
+			'/login',
+			{
+				title: 'Auth failed',
+				description: 'There was an error authenticating with "github".',
+				type: 'error',
+			},
+			{ headers: destroyRedirectTo },
+		);
 	}
 
 	const { profile } = result;
@@ -40,19 +54,36 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const currentUser = await getUserFromSession(request);
 
 	if (existingConnection && currentUser) {
+		/**
+		 * Connection is already linked to current user
+		 */
 		if (existingConnection.user.id === currentUser.id) {
-			return redirectWithToast('/', {
-				title: 'Already connected',
-				description: `Your "${profile.firstName}" github account is already connected.`,
-			});
+			return redirectWithToast(
+				'/',
+				{
+					title: 'Already connected',
+					description: `Your "${profile.firstName}" github account is already connected.`,
+				},
+				{ headers: destroyRedirectTo },
+			);
 		} else {
-			return redirectWithToast('/', {
-				title: 'Already connected',
-				description: `The "${profile.firstName}" github account is already connected to another account.`,
-			});
+			/**
+			 * Provider is linked to another account
+			 */
+			return redirectWithToast(
+				'/',
+				{
+					title: 'Already connected',
+					description: `The "${profile.firstName}" github account is already connected to another account.`,
+				},
+				{ headers: destroyRedirectTo },
+			);
 		}
 	}
 
+	/**
+	 * Link provider to current user
+	 */
 	if (currentUser) {
 		await db.insert(connections).values({
 			providerId: profile.id,
@@ -60,16 +91,27 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			userId: currentUser.id,
 		});
 
-		return redirectWithToast('/', {
-			title: 'Connected',
-			description: `You ${profile.firstName} github account has been connected.`,
-		});
+		return redirectWithToast(
+			'/',
+			{
+				title: 'Connected',
+				description: `You ${profile.firstName} github account has been connected.`,
+			},
+			{ headers: destroyRedirectTo },
+		);
 	}
 
+	/**
+	 * Provider was used to sign up before create a new session for user
+	 */
 	if (existingConnection) {
 		return await makeSession({ request, userId: existingConnection.userId });
 	}
 
+	/**
+	 * Check if the email exists in the DB, if it does create a new connection
+	 * and link it to the user.
+	 */
 	const user = await db.query.users.findFirst({
 		columns: { id: true },
 		where: eq(users.email, profile.email.toLowerCase()),
@@ -82,9 +124,20 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			userId: user.id,
 		});
 
-		return await makeSession({ request, userId: user.id });
+		return await makeSession(
+			{ request, userId: user.id },
+			{
+				headers: await createToastHeader({
+					title: 'Connected',
+					description: `You ${profile.firstName} github account has been connected.`,
+				}),
+			},
+		);
 	}
 
+	/**
+	 * Create a new user and new connection
+	 */
 	const [newUser] = await db
 		.insert(users)
 		.values({
@@ -103,13 +156,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	return await makeSession({ request, userId: newUser.id });
 }
 
-async function makeSession({
-	request,
-	userId,
-}: {
-	request: Request;
-	userId: string;
-}) {
+async function makeSession(
+	{
+		request,
+		userId,
+	}: {
+		request: Request;
+		userId: string;
+	},
+	responseInit?: ResponseInit,
+) {
 	const [session] = await db
 		.insert(sessions)
 		.values({
@@ -129,9 +185,9 @@ async function makeSession({
 			description: 'You have successfully authenticated with Github.',
 		},
 		{
-			headers: {
+			headers: combineHeaders(responseInit?.headers, destroyRedirectTo, {
 				'Set-Cookie': await authSessionStorage.commitSession(authSession),
-			},
+			}),
 		},
 	);
 }
