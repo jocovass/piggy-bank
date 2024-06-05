@@ -1,7 +1,7 @@
 import { UTCDate } from '@date-fns/utc';
 import { generateTOTP } from '@epic-web/totp';
 import { type z } from 'zod';
-import { getOriginUrl } from '~/app/utils/misc';
+import { getDomainUrl } from '~/app/utils/misc';
 import { type VerificationTypeSchema } from '~/app/utils/validation-schemas';
 import { verificationMaxAge } from '~/app/utils/verification.server';
 import { db } from '~/db/index.server';
@@ -27,7 +27,7 @@ export function generateRedirectUrl({
 	type,
 	target,
 }: GenerateRedirectUrl) {
-	const url = new URL(`${getOriginUrl(request)}/verify`);
+	const url = new URL(`${getDomainUrl(request)}/verify`);
 	url.searchParams.set(verifyTypeParamKey, type);
 	url.searchParams.set(verifyTargetParamKey, target);
 	if (redirectUrl) {

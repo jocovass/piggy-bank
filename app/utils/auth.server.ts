@@ -3,7 +3,6 @@ import { redirect } from '@remix-run/node';
 import bcrypt from 'bcryptjs';
 import { eq } from 'drizzle-orm';
 import { Authenticator } from 'remix-auth';
-import { GitHubStrategy } from 'remix-auth-github';
 import { type z } from 'zod';
 import { db } from '~/db/index.server';
 import {
@@ -13,39 +12,18 @@ import {
 	users,
 	passwords,
 } from '~/db/schema';
-import { connectionSessionStorage } from './connection.server';
+import { connectionSessionStorage, providers } from './connection.server';
+import { type ProviderUser } from './providers/providers';
 import { authSessionStorage } from './session.server';
 import { type OnboardingSchema } from './validation-schemas';
 
-export type ProviderUser = {
-	id: string;
-	email: string;
-	firstName: string;
-	lastName: string;
-	avatarUrl: string;
-};
 export const authenticator = new Authenticator<ProviderUser>(
 	connectionSessionStorage,
 );
 
-let gitHubStrategy = new GitHubStrategy(
-	{
-		clientID: process.env.GITHUB_CLIENT_ID,
-		clientSecret: process.env.GITHUB_CLIENT_SECRET,
-		callbackURL: 'http://localhost:3000/auth/github/callback',
-	},
-	async ({ profile }) => {
-		return {
-			id: profile.id,
-			email: profile.emails[0].value,
-			firstName: profile.name.givenName.split(' ')[0],
-			lastName: profile.name.givenName.split(' ')[1],
-			avatarUrl: profile.photos[0].value,
-		};
-	},
-);
-
-authenticator.use(gitHubStrategy, 'github');
+for (const [name, provider] of Object.entries(providers)) {
+	authenticator.use(provider.getAuthStrategy(), name);
+}
 
 export const SESSION_EXPIRATION_TIME = 1000 * 60 * 60 * 24 * 30;
 export const getSessionExpirationDate = () =>
