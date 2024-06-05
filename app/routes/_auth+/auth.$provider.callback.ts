@@ -15,7 +15,7 @@ import {
 } from '~/app/utils/toast.server';
 import { db } from '~/db/index.server';
 import { connections, sessions, users } from '~/db/schema';
-import { ProviderNameSchema } from './auth.$provider';
+import { ProviderNameSchema, type ProviderName } from './auth.$provider';
 
 const destroyRedirectTo = { 'Set-Cookie': destroyRedirectToHeader };
 
@@ -34,7 +34,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			'/login',
 			{
 				title: 'Auth failed',
-				description: 'There was an error authenticating with "github".',
+				description: `There was an error authenticating with ${provider}.`,
 				type: 'error',
 			},
 			{ headers: destroyRedirectTo },
@@ -62,7 +62,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				'/',
 				{
 					title: 'Already connected',
-					description: `Your "${profile.firstName}" github account is already connected.`,
+					description: `Your "${profile.firstName}" ${provider} account is already connected.`,
 				},
 				{ headers: destroyRedirectTo },
 			);
@@ -74,7 +74,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 				'/',
 				{
 					title: 'Already connected',
-					description: `The "${profile.firstName}" github account is already connected to another account.`,
+					description: `The "${profile.firstName}" ${provider} account is already connected to another account.`,
 				},
 				{ headers: destroyRedirectTo },
 			);
@@ -95,7 +95,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			'/',
 			{
 				title: 'Connected',
-				description: `You ${profile.firstName} github account has been connected.`,
+				description: `You ${profile.firstName} ${provider} account has been connected.`,
 			},
 			{ headers: destroyRedirectTo },
 		);
@@ -105,7 +105,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	 * Provider was used to sign up before create a new session for user
 	 */
 	if (existingConnection) {
-		return await makeSession({ request, userId: existingConnection.userId });
+		return await makeSession({
+			provider,
+			request,
+			userId: existingConnection.userId,
+		});
 	}
 
 	/**
@@ -125,11 +129,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		});
 
 		return await makeSession(
-			{ request, userId: user.id },
+			{ provider, request, userId: user.id },
 			{
 				headers: await createToastHeader({
 					title: 'Connected',
-					description: `You ${profile.firstName} github account has been connected.`,
+					description: `Your ${profile.firstName} ${provider} account has been connected.`,
 				}),
 			},
 		);
@@ -153,14 +157,16 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		userId: newUser.id,
 	});
 
-	return await makeSession({ request, userId: newUser.id });
+	return await makeSession({ provider, request, userId: newUser.id });
 }
 
 async function makeSession(
 	{
+		provider,
 		request,
 		userId,
 	}: {
+		provider: ProviderName;
 		request: Request;
 		userId: string;
 	},
@@ -182,7 +188,7 @@ async function makeSession(
 		'/',
 		{
 			title: 'Auth successful',
-			description: 'You have successfully authenticated with Github.',
+			description: `You have successfully authenticated with ${provider}.`,
 		},
 		{
 			headers: combineHeaders(responseInit?.headers, destroyRedirectTo, {
