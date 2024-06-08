@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "remix vite:build",
-    "dev": "remix vite:dev",
+    "dev": "remix vite:dev --host",
     "lint": "eslint .",
     "start": "remix-serve ./build/server/index.js",
     "db:check": "drizzle-kit check:pg --schema db/schema.ts --out ./db/drizzle",
