@@ -186,7 +186,7 @@ export const verifications = pgTable(
 		/**
 		 * When it's safe to delete this verification
 		 */
-		expiresAt: timestamp('expiresAt', { withTimezone: true }).notNull(),
+		expiresAt: timestamp('expiresAt', { withTimezone: true }),
 	},
 	table => {
 		return {
