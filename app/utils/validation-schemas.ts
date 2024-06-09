@@ -48,13 +48,17 @@ export const OnboardingSchema = z
 		}
 	});
 
-export const VerificationTypeSchema = z.enum(type);
-export const VerifySchema = z.object({
+export const OTPSchema = z.object({
 	otp: z.string().min(6).max(6),
-	target: z.string(),
-	type: VerificationTypeSchema,
-	redirectTo: RedirectSchema,
 });
+export const VerificationTypeSchema = z.enum(type);
+export const VerifySchema = z
+	.object({
+		target: z.string(),
+		type: VerificationTypeSchema,
+		redirectTo: RedirectSchema,
+	})
+	.merge(OTPSchema);
 
 export const ServerToastSchema = z.object({
 	description: z.string().optional(),

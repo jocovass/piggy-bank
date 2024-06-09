@@ -138,14 +138,24 @@ export async function getUserFromSession(request: Request) {
 		: null;
 
 	if (sessionId && (!sessionWithUser || !sessionWithUser?.user)) {
-		throw redirect('/', {
+		throw redirect('/login', {
 			headers: {
 				'set-cookie': await authSessionStorage.destroySession(authSession),
 			},
 		});
 	}
 
-	return sessionWithUser?.user;
+	return sessionWithUser?.user || null;
+}
+
+export async function requireUser(request: Request) {
+	const user = await getUserFromSession(request);
+
+	if (!user) {
+		throw redirect('/login');
+	}
+
+	return user;
 }
 
 export async function requireAnonymus(request: Request) {
@@ -173,7 +183,7 @@ export async function requireAnonymus(request: Request) {
 	if (sessionWithUser && !sessionWithUser.user) {
 		await db.delete(sessions).where(eq(sessions.id, sessionId));
 
-		throw redirect('/', {
+		throw redirect('/login', {
 			headers: {
 				'Set-Cookie': await authSessionStorage.destroySession(authSession),
 			},

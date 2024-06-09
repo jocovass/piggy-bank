@@ -9,12 +9,14 @@ import {
 	Outlet,
 	Scripts,
 	ScrollRestoration,
+	useLoaderData,
 	useRouteError,
 } from '@remix-run/react';
 import { Toaster } from '~/app/components/ui/sonner';
 import tailwindCss from '~/app/styles/tailwind.css?url';
 import { getUserFromSession } from './utils/auth.server';
 import { getToastFromRequest } from './utils/toast.server';
+import { useToast } from './utils/toaster';
 
 export const links: LinksFunction = () => {
 	return [{ rel: 'stylesheet', href: tailwindCss }];
@@ -48,6 +50,9 @@ export function Document({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+	const data = useLoaderData<typeof loader>();
+	useToast(data.toast);
+
 	return (
 		<Document>
 			<Outlet />
