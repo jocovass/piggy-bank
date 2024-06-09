@@ -18,7 +18,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		await db.delete(sessions).where(eq(sessions.id, sessionId));
 	}
 
-	return redirect('/logout', {
+	return redirect('/login', {
 		headers: {
 			'Set-Cookie': await authSessionStorage.destroySession(authSession),
 		},

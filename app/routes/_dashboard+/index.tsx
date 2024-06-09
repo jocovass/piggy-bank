@@ -3,7 +3,6 @@ import {
 	type LoaderFunctionArgs,
 	json,
 } from '@remix-run/node';
-import { requireUser } from '~/app/utils/auth.server';
 
 export const meta: MetaFunction = () => {
 	return [
@@ -13,8 +12,7 @@ export const meta: MetaFunction = () => {
 };
 
 export async function loader({ request }: LoaderFunctionArgs) {
-	const user = await requireUser(request);
-	return json({ user: user });
+	return json({});
 }
 
 export default function Dashboard() {

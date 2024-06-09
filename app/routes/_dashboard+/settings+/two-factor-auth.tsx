@@ -92,7 +92,6 @@ export async function action({ request }: ActionFunctionArgs) {
 export default function TwoFactorAuth() {
 	const { twoFacotorEnabled } = useLoaderData<typeof loader>();
 	const actionData = useActionData<typeof action>();
-
 	console.log(actionData);
 
 	return (

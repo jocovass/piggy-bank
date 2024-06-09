@@ -1,12 +1,5 @@
-import { type LoaderFunctionArgs, json } from '@remix-run/node';
 import { Form, NavLink, Outlet } from '@remix-run/react';
 import { Button } from '~/app/components/ui/button';
-import { requireUser } from '~/app/utils/auth.server';
-
-export async function loader({ request }: LoaderFunctionArgs) {
-	requireUser(request);
-	return json({});
-}
 
 export default function SettingsLayout() {
 	return (
