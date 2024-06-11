@@ -94,6 +94,7 @@ export async function action({ request }: ActionFunctionArgs) {
 					),
 			});
 
+			console.log(twoFactorVerify);
 			if (!twoFactorVerify) {
 				ctx.addIssue({
 					code: z.ZodIssueCode.custom,
@@ -108,6 +109,7 @@ export async function action({ request }: ActionFunctionArgs) {
 				...twoFactorVerify,
 			});
 
+			console.log(result);
 			if (!result) {
 				ctx.addIssue({
 					code: z.ZodIssueCode.custom,
@@ -212,7 +214,9 @@ export default function TwoFactorAuthVerify() {
 						<InputOTPSlot index={5} />
 					</InputOTPGroup>
 				</InputOTP>
-				<Button type="submit">Submit</Button>
+				<Button type="submit" name="intent" value="verify">
+					Submit
+				</Button>
 				<Button asChild type="button">
 					<NavLink to="/settings/two-factor-auth">Cancel</NavLink>
 				</Button>

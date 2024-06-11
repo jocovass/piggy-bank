@@ -6,11 +6,12 @@ import {
 	type ActionFunctionArgs,
 	redirect,
 } from '@remix-run/node';
-import { Form, NavLink, useActionData, useLoaderData } from '@remix-run/react';
+import { Form, NavLink, useFetcher, useLoaderData } from '@remix-run/react';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { Button } from '~/app/components/ui/button';
 import { requireUser } from '~/app/utils/auth.server';
+import { createToastHeader } from '~/app/utils/toast.server';
 import { db } from '~/db/index.server';
 import { verifications } from '~/db/schema';
 import { twoFactorAuthVerifyType } from './two-factor-auth_.verify';
@@ -89,6 +90,28 @@ export async function action({ request }: ActionFunctionArgs) {
 		return redirect('/settings/two-factor-auth/verify');
 	}
 
+	if (intent === 'disable') {
+		await db
+			.delete(verifications)
+			.where(
+				and(
+					eq(verifications.target, user.id),
+					eq(verifications.type, twoFactorAuthType),
+				),
+			);
+
+		return json(
+			{},
+			{
+				headers: await createToastHeader({
+					title: '2FA Disabled',
+					description: 'Successfully disabled 2FA',
+					type: 'success',
+				}),
+			},
+		);
+	}
+
 	return json(
 		{
 			data: submission.reply({ formErrors: ['Disable not yet implemented'] }),
@@ -99,8 +122,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export default function TwoFactorAuth() {
 	const { twoFacotorEnabled } = useLoaderData<typeof loader>();
-	const actionData = useActionData<typeof action>();
-	console.log(actionData);
+	const fetcher = useFetcher();
 
 	return (
 		<div>
@@ -124,11 +146,17 @@ export default function TwoFactorAuth() {
 						Two factor auth is enabled for this account. You can disable it by
 						clicking the button below.
 					</p>
-					<Form method="POST">
-						<Button type="submit" name="intent" value="disable">
-							Disable 2FA
-						</Button>
-					</Form>
+					<Button
+						onClick={() => {
+							const form = new FormData();
+							form.append('intent', 'disable');
+							fetcher.submit(form, {
+								method: 'POST',
+							});
+						}}
+					>
+						{fetcher.state !== 'loading' ? 'Disable 2FA' : 'Disabling...'}
+					</Button>
 				</div>
 			)}
 			<NavLink to="/settings/password">Back to passwords</NavLink>
