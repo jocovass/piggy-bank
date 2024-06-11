@@ -8,6 +8,7 @@ import {
 	redirect,
 } from '@remix-run/node';
 import { Form, NavLink, useActionData, useLoaderData } from '@remix-run/react';
+import { and, eq } from 'drizzle-orm';
 import { REGEXP_ONLY_DIGITS_AND_CHARS } from 'input-otp';
 import QrCode from 'qrcode';
 import { z } from 'zod';
@@ -22,11 +23,24 @@ import { getDomainUrl } from '~/app/utils/misc';
 import { redirectWithToast } from '~/app/utils/toast.server';
 import { OTPSchema } from '~/app/utils/validation-schemas';
 import { db } from '~/db/index.server';
-import { twoFactorAuthKey } from './two-factor-auth';
+import { verifications } from '~/db/schema';
+import { twoFactorAuthType } from './two-factor-auth';
+
+export const twoFactorAuthVerifyType = '2fa-verify';
+export const schema = z.union([
+	z.object({
+		intent: z.literal('cancel'),
+	}),
+	z
+		.object({
+			intent: z.literal('verify'),
+		})
+		.merge(OTPSchema),
+]);
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const user = await requireUser(request);
-	const verification = await db.query.verifications.findFirst({
+	const twoFactorVerify = await db.query.verifications.findFirst({
 		columns: {
 			id: true,
 			algorithm: true,
@@ -37,17 +51,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		where: (verification, { and, eq }) =>
 			and(
 				eq(verification.target, user.id),
-				eq(verification.type, twoFactorAuthKey),
+				eq(verification.type, twoFactorAuthVerifyType),
 			),
 	});
 
-	if (!verification) {
+	if (!twoFactorVerify) {
 		return redirect('/settings/two-factor-auth');
 	}
 
 	const issuer = new URL(getDomainUrl(request)).host;
 	const url = getTOTPAuthUri({
-		...verification,
+		...twoFactorVerify,
 		accountName: user.email,
 		issuer,
 	});
@@ -61,8 +75,12 @@ export async function action({ request }: ActionFunctionArgs) {
 	const user = await requireUser(request);
 	const formData = await request.formData();
 	const submission = await parseWithZod(formData, {
-		schema: OTPSchema.superRefine(async (data, ctx) => {
-			const verification = await db.query.verifications.findFirst({
+		schema: schema.superRefine(async (data, ctx) => {
+			if (data.intent === 'cancel') {
+				return;
+			}
+
+			const twoFactorVerify = await db.query.verifications.findFirst({
 				columns: {
 					algorithm: true,
 					charSet: true,
@@ -72,11 +90,11 @@ export async function action({ request }: ActionFunctionArgs) {
 				where: (verification, { and, eq }) =>
 					and(
 						eq(verification.target, user.id),
-						eq(verification.type, twoFactorAuthKey),
+						eq(verification.type, twoFactorAuthVerifyType),
 					),
 			});
 
-			if (!verification) {
+			if (!twoFactorVerify) {
 				ctx.addIssue({
 					code: z.ZodIssueCode.custom,
 					path: ['otp'],
@@ -87,7 +105,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
 			const result = verifyTOTP({
 				otp: data.otp,
-				...verification,
+				...twoFactorVerify,
 			});
 
 			if (!result) {
@@ -111,6 +129,33 @@ export async function action({ request }: ActionFunctionArgs) {
 			},
 		);
 	}
+
+	const { intent } = submission.value;
+
+	if (intent === 'cancel') {
+		await db
+			.delete(verifications)
+			.where(
+				and(
+					eq(verifications.target, user.id),
+					eq(verifications.type, twoFactorAuthVerifyType),
+				),
+			);
+
+		return redirect('/settings/two-factor-auth');
+	}
+
+	await db
+		.update(verifications)
+		.set({
+			type: twoFactorAuthType,
+		})
+		.where(
+			and(
+				eq(verifications.target, user.id),
+				eq(verifications.type, twoFactorAuthVerifyType),
+			),
+		);
 
 	return redirectWithToast('/settings/two-factor-auth', {
 		title: '2FA Enabled',

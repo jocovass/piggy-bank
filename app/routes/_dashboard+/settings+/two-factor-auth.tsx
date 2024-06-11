@@ -13,8 +13,9 @@ import { Button } from '~/app/components/ui/button';
 import { requireUser } from '~/app/utils/auth.server';
 import { db } from '~/db/index.server';
 import { verifications } from '~/db/schema';
+import { twoFactorAuthVerifyType } from './two-factor-auth_.verify';
 
-export const twoFactorAuthKey = '2fa';
+export const twoFactorAuthType = '2fa';
 export const schema = z.object({
 	intent: z.enum(['enable', 'disable'], {
 		required_error: 'Intent is required',
@@ -27,7 +28,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const twoFacotorEnabled = await db.query.verifications.findFirst({
 		where: and(
 			eq(verifications.target, user.id),
-			eq(verifications.type, twoFactorAuthKey),
+			eq(verifications.type, twoFactorAuthType),
 		),
 	});
 
@@ -56,7 +57,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	const twoFacotorEnabled = await db.query.verifications.findFirst({
 		where: and(
 			eq(verifications.target, user.id),
-			eq(verifications.type, twoFactorAuthKey),
+			eq(verifications.type, twoFactorAuthType),
 		),
 	});
 
@@ -72,11 +73,18 @@ export async function action({ request }: ActionFunctionArgs) {
 
 		const { otp, ...totpConfig } = generateTOTP();
 
-		await db.insert(verifications).values({
+		const verificationConfig = {
 			...totpConfig,
-			type: twoFactorAuthKey,
+			type: twoFactorAuthVerifyType,
 			target: user.id,
-		});
+		};
+		await db
+			.insert(verifications)
+			.values(verificationConfig)
+			.onConflictDoUpdate({
+				target: [verifications.target, verifications.type],
+				set: verificationConfig,
+			});
 
 		return redirect('/settings/two-factor-auth/verify');
 	}
