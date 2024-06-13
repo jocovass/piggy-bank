@@ -6,27 +6,27 @@ import {
 	type ActionFunctionArgs,
 	redirect,
 } from '@remix-run/node';
-import { Form, NavLink, useFetcher, useLoaderData } from '@remix-run/react';
+import { Form, NavLink, useLoaderData } from '@remix-run/react';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { Button } from '~/app/components/ui/button';
 import { requireUser } from '~/app/utils/auth.server';
-import { createToastHeader } from '~/app/utils/toast.server';
 import { db } from '~/db/index.server';
 import { verifications } from '~/db/schema';
 import { twoFactorAuthVerifyType } from './two-factor-auth_.verify';
 
 export const twoFactorAuthType = '2fa';
 export const schema = z.object({
-	intent: z.enum(['enable', 'disable'], {
+	intent: z.enum(['enable'], {
 		required_error: 'Intent is required',
-		invalid_type_error: 'Intent must be enable or disable',
+		invalid_type_error: 'Invalid intent',
 	}),
 });
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const user = await requireUser(request);
 	const twoFacotorEnabled = await db.query.verifications.findFirst({
+		columns: { id: true },
 		where: and(
 			eq(verifications.target, user.id),
 			eq(verifications.type, twoFactorAuthType),
@@ -53,76 +53,43 @@ export async function action({ request }: ActionFunctionArgs) {
 		);
 	}
 
-	const { intent } = submission.value;
-
 	const twoFacotorEnabled = await db.query.verifications.findFirst({
+		columns: { id: true },
 		where: and(
 			eq(verifications.target, user.id),
 			eq(verifications.type, twoFactorAuthType),
 		),
 	});
 
-	if (intent === 'enable') {
-		if (twoFacotorEnabled) {
-			return json(
-				{
-					data: submission.reply({ formErrors: ['2FA is already enabled'] }),
-				},
-				{ status: 400 },
-			);
-		}
-
-		const { otp, ...totpConfig } = generateTOTP();
-
-		const verificationConfig = {
-			...totpConfig,
-			type: twoFactorAuthVerifyType,
-			target: user.id,
-		};
-		await db
-			.insert(verifications)
-			.values(verificationConfig)
-			.onConflictDoUpdate({
-				target: [verifications.target, verifications.type],
-				set: verificationConfig,
-			});
-
-		return redirect('/settings/two-factor-auth/verify');
-	}
-
-	if (intent === 'disable') {
-		await db
-			.delete(verifications)
-			.where(
-				and(
-					eq(verifications.target, user.id),
-					eq(verifications.type, twoFactorAuthType),
-				),
-			);
-
+	if (twoFacotorEnabled) {
 		return json(
-			{},
 			{
-				headers: await createToastHeader({
-					title: '2FA Disabled',
-					description: 'Successfully disabled 2FA',
-					type: 'success',
-				}),
+				data: submission.reply({ formErrors: ['2FA is already enabled'] }),
 			},
+			{ status: 400 },
 		);
 	}
 
-	return json(
-		{
-			data: submission.reply({ formErrors: ['Disable not yet implemented'] }),
-		},
-		{ status: 400 },
-	);
+	const { otp, ...totpConfig } = generateTOTP();
+
+	const verificationConfig = {
+		...totpConfig,
+		type: twoFactorAuthVerifyType,
+		target: user.id,
+	};
+	await db
+		.insert(verifications)
+		.values(verificationConfig)
+		.onConflictDoUpdate({
+			target: [verifications.target, verifications.type],
+			set: verificationConfig,
+		});
+
+	return redirect('/settings/two-factor-auth/verify');
 }
 
 export default function TwoFactorAuth() {
 	const { twoFacotorEnabled } = useLoaderData<typeof loader>();
-	const fetcher = useFetcher();
 
 	return (
 		<div>
@@ -146,16 +113,10 @@ export default function TwoFactorAuth() {
 						Two factor auth is enabled for this account. You can disable it by
 						clicking the button below.
 					</p>
-					<Button
-						onClick={() => {
-							const form = new FormData();
-							form.append('intent', 'disable');
-							fetcher.submit(form, {
-								method: 'POST',
-							});
-						}}
-					>
-						{fetcher.state !== 'loading' ? 'Disable 2FA' : 'Disabling...'}
+					<Button asChild>
+						<NavLink to="/settings/two-factor-auth/disable">
+							Disable 2FA
+						</NavLink>
 					</Button>
 				</div>
 			)}
