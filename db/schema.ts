@@ -198,8 +198,21 @@ export const verifications = pgTable(
 	},
 );
 
+/**
+ * User
+ */
 export const selectUserSchema = createSelectSchema(users);
 export const insertUserChema = createInsertSchema(users);
-export const selectPasswordSchema = createSelectSchema(passwords);
 export type User = z.infer<typeof selectUserSchema>;
+
+/**
+ * Password
+ */
+export const selectPasswordSchema = createSelectSchema(passwords);
 export type Password = z.infer<typeof selectPasswordSchema>;
+
+/**
+ * Session
+ */
+export const selectSessionSchema = createSelectSchema(sessions);
+export type Session = z.infer<typeof selectSessionSchema>;
