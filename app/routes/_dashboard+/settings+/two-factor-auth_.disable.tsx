@@ -2,7 +2,6 @@ import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
 	json,
-	redirect,
 } from '@remix-run/node';
 import { Form } from '@remix-run/react';
 import { and, eq } from 'drizzle-orm';
@@ -13,10 +12,7 @@ import {
 } from '~/app/routes/_auth+/login.server';
 import { generateRedirectUrl } from '~/app/routes/_auth+/verify.server';
 import { requireUser } from '~/app/utils/auth.server';
-import {
-	authSessionStorage,
-	twoFactorExpiresAtKey,
-} from '~/app/utils/session.server';
+import { authSessionStorage } from '~/app/utils/session.server';
 import { redirectWithToast } from '~/app/utils/toast.server';
 import { verifySessionStorage } from '~/app/utils/verification.server';
 import { db } from '~/db/index.server';
