@@ -1,3 +1,4 @@
+import { redirect } from '@remix-run/node';
 import { and, eq } from 'drizzle-orm';
 import { twoFactorAuthType } from '~/app/routes/_dashboard+/settings+/two-factor-auth';
 import { requireUser } from '~/app/utils/auth.server';
@@ -10,7 +11,7 @@ export const verifiedTimeKey = 'verified-time';
 export const unverifiedsessionidkey = 'unverified-session-id';
 export const rememberMeKey = 'remember-me';
 
-export function handleNewSession({
+export async function handleNewSession({
 	remember = false,
 	request,
 	session,
@@ -18,7 +19,22 @@ export function handleNewSession({
 	remember?: boolean;
 	request: Request;
 	session: Session;
-}) {}
+}) {
+	const authSession = await authSessionStorage.getSession(
+		request.headers.get('cookie'),
+	);
+
+	authSession.set(verifiedTimeKey, new Date());
+	authSession.set(rememberMeKey, remember);
+	authSession.set(unverifiedsessionidkey, session.id);
+	throw redirect('/', {
+		headers: {
+			'Set-Cookie': await authSessionStorage.commitSession(authSession, {
+				expires: remember ? session.expirationDate : undefined,
+			}),
+		},
+	});
+}
 
 export async function shouldRequestTwoFA(request: Request, user?: User) {
 	const authSession = await authSessionStorage.getSession(
