@@ -10,7 +10,7 @@ export const authSessionStorage = createCookieSessionStorage({
 	},
 });
 
-export const twoFactorExpiresAtKey = 'twoFactorExpiresAt';
+export const sessionExpiresAtKey = 'twoFactorExpiresAt';
 const originalCommitSession = authSessionStorage.commitSession;
 
 Object.defineProperty(authSessionStorage, 'commitSession', {
@@ -20,18 +20,18 @@ Object.defineProperty(authSessionStorage, 'commitSession', {
 		const [session, options] = args;
 
 		if (options?.expires) {
-			session.set(twoFactorExpiresAtKey, options.expires);
+			session.set(sessionExpiresAtKey, options.expires);
 		}
 
 		if (options?.maxAge) {
 			session.set(
-				twoFactorExpiresAtKey,
+				sessionExpiresAtKey,
 				new Date(Date.now() + options.maxAge * 1000),
 			);
 		}
 
-		const expires = session.has(twoFactorExpiresAtKey)
-			? new Date(session.get(twoFactorExpiresAtKey))
+		const expires = session.has(sessionExpiresAtKey)
+			? new Date(session.get(sessionExpiresAtKey))
 			: undefined;
 
 		const setCookieHeader = await originalCommitSession(session, {

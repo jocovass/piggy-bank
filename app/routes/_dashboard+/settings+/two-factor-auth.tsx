@@ -15,7 +15,10 @@ import { db } from '~/db/index.server';
 import { verifications } from '~/db/schema';
 import { twoFactorAuthVerifyType } from './two-factor-auth_.verify';
 
+export const verifiedTimeKey = 'verified-time';
+export const unverifiedsessionIdKey = 'unverified-session-id';
 export const twoFactorAuthType = '2fa';
+
 export const schema = z.object({
 	intent: z.enum(['enable'], {
 		required_error: 'Intent is required',
