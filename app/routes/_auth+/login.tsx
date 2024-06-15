@@ -4,19 +4,14 @@ import {
 	type ActionFunctionArgs,
 	type LoaderFunctionArgs,
 	json,
-	redirect,
 } from '@remix-run/node';
 import { Form, useActionData } from '@remix-run/react';
 import { z } from 'zod';
 import { Field } from '~/app/components/forms';
 import { Button } from '~/app/components/ui/button';
-import {
-	createLoginSession,
-	requireAnonymus,
-	sessionKey,
-} from '~/app/utils/auth.server';
-import { authSessionStorage } from '~/app/utils/session.server';
+import { createLoginSession, requireAnonymus } from '~/app/utils/auth.server';
 import { LoginSchema } from '~/app/utils/validation-schemas';
+import { handleNewSession } from './login.server';
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	await requireAnonymus(request);
@@ -53,18 +48,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
 	const { session, remember } = submission.value;
 
-	const authSession = await authSessionStorage.getSession(
-		request.headers.get('cookie'),
-	);
-	authSession.set(sessionKey, session.id);
-
-	return redirect('/', {
-		headers: {
-			'Set-Cookie': await authSessionStorage.commitSession(authSession, {
-				expires: remember ? session.expirationDate : undefined,
-			}),
-		},
-	});
+	return handleNewSession({ remember, request, session });
 }
 
 export default function LoginRoute() {

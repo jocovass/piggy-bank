@@ -27,6 +27,7 @@ import { verifications } from '~/db/schema';
 import { twoFactorAuthType } from './two-factor-auth';
 
 export const twoFactorAuthVerifyType = '2fa-verify';
+
 export const schema = z.union([
 	z.object({
 		intent: z.literal('cancel'),

@@ -15,7 +15,9 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "paths": {
-      "~/*": ["./*"]
+      "~/app/*": ["./app/*"],
+      "~/db/*": ["./db/*"],
+      "~/test/*": ["./test/*"]
     },
     // Vite takes care of building everything, not tsc.
     "noEmit": true

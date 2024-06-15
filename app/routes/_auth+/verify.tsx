@@ -5,9 +5,7 @@ import {
 	useInputControl,
 } from '@conform-to/react';
 import { getZodConstraint, parseWithZod } from '@conform-to/zod';
-import { UTCDate } from '@date-fns/utc';
-import { verifyTOTP } from '@epic-web/totp';
-import { type ActionFunctionArgs, json, redirect } from '@remix-run/node';
+import { type ActionFunctionArgs, json } from '@remix-run/node';
 import { Form, useActionData, useSearchParams } from '@remix-run/react';
 import { and, eq } from 'drizzle-orm';
 import { REGEXP_ONLY_DIGITS_AND_CHARS } from 'input-otp';
@@ -19,10 +17,11 @@ import {
 	InputOTPSlot,
 } from '~/app/components/ui/input-otp';
 import { VerifySchema } from '~/app/utils/validation-schemas';
-import { verifySessionStorage } from '~/app/utils/verification.server';
 import { db } from '~/db/index.server';
 import { verifications } from '~/db/schema';
-import { onboardingEmailSessionKey } from './onboarding';
+import { handleTwoFAVerification } from './login.server';
+import { handleOnbaordingVerification } from './onboarding.server';
+import { isOtpCodeValid } from './verify.server';
 
 export const verifyTypeParamKey = 'type';
 export const verifyTargetParamKey = 'target';
@@ -39,37 +38,13 @@ export async function action({ request }: ActionFunctionArgs) {
 	const formData = await request.formData();
 	const submission = await parseWithZod(formData, {
 		schema: VerifySchema.superRefine(async (data, ctx) => {
-			const verification = await db.query.verifications.findFirst({
-				columns: {
-					algorithm: true,
-					charSet: true,
-					digits: true,
-					period: true,
-					secret: true,
-				},
-				where: (verification, { and, eq, gt }) =>
-					and(
-						eq(verification.target, data.target),
-						eq(verification.type, data.type),
-						gt(verification.expiresAt, new UTCDate()),
-					),
-			});
-
-			if (!verification) {
-				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
-					path: ['otp'],
-					message: 'Invalid verification code',
-				});
-				return;
-			}
-
-			const result = verifyTOTP({
+			const isValid = await isOtpCodeValid({
 				otp: data.otp,
-				...verification,
+				target: data.target,
+				type: data.type,
 			});
 
-			if (!result) {
+			if (!isValid) {
 				ctx.addIssue({
 					code: z.ZodIssueCode.custom,
 					path: ['otp'],
@@ -92,18 +67,24 @@ export async function action({ request }: ActionFunctionArgs) {
 
 	const { target, type } = submission.value;
 
-	await db
-		.delete(verifications)
-		.where(and(eq(verifications.target, target), eq(verifications.type, type)));
+	async function deleteVerification() {
+		await db
+			.delete(verifications)
+			.where(
+				and(eq(verifications.target, target), eq(verifications.type, type)),
+			);
+	}
 
-	const verifySession = await verifySessionStorage.getSession();
-	verifySession.set(onboardingEmailSessionKey, submission.value.target);
-
-	return redirect('/onboarding', {
-		headers: {
-			'Set-Cookie': await verifySessionStorage.commitSession(verifySession),
-		},
-	});
+	if (type === 'onboarding') {
+		await deleteVerification();
+		return await handleOnbaordingVerification({ email: target, request });
+	} else if (type === '2fa') {
+		return await handleTwoFAVerification({
+			body: formData,
+			request,
+			submission,
+		});
+	}
 }
 
 export default function Verify() {

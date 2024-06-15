@@ -25,7 +25,11 @@ for (const [name, provider] of Object.entries(providers)) {
 	authenticator.use(provider.getAuthStrategy(), name);
 }
 
+/**
+ * The session expiration time is set to 30 days.
+ */
 export const SESSION_EXPIRATION_TIME = 1000 * 60 * 60 * 24 * 30;
+
 export const getSessionExpirationDate = () =>
 	new UTCDate(Date.now() + SESSION_EXPIRATION_TIME);
 
@@ -43,7 +47,7 @@ export async function createLoginSession({
 		return null;
 	}
 
-	const session = await db
+	const [session] = await db
 		.insert(sessions)
 		.values({
 			userId: user.id,
@@ -51,7 +55,7 @@ export async function createLoginSession({
 		})
 		.returning();
 
-	return session[0];
+	return session;
 }
 
 export type SignupArgs = z.infer<typeof OnboardingSchema> & {
