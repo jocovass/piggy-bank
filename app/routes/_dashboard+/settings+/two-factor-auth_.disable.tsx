@@ -1,8 +1,4 @@
-import {
-	type ActionFunctionArgs,
-	type LoaderFunctionArgs,
-	json,
-} from '@remix-run/node';
+import { type ActionFunctionArgs } from '@remix-run/node';
 import { Form } from '@remix-run/react';
 import { and, eq } from 'drizzle-orm';
 import { Button } from '~/app/components/ui/button';
@@ -12,11 +8,6 @@ import { redirectWithToast } from '~/app/utils/toast.server';
 import { db } from '~/db/index.server';
 import { verifications } from '~/db/schema';
 import { twoFactorAuthType } from './two-factor-auth';
-
-// export async function loader({ request }: LoaderFunctionArgs) {
-// 	await requireRecentTwoFactorAuth(request);
-// 	return json({});
-// }
 
 export async function action({ request }: ActionFunctionArgs) {
 	console.log('action');
