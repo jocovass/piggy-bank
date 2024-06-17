@@ -16,7 +16,7 @@ import {
 	InputOTPGroup,
 	InputOTPSlot,
 } from '~/app/components/ui/input-otp';
-import { VerifySchema } from '~/app/utils/validation-schemas';
+import { OTPSchema, RedirectSchema } from '~/app/utils/validation-schemas';
 import { db } from '~/db/index.server';
 import { verifications } from '~/db/schema';
 import { handleTwoFAVerification } from './login.server';
@@ -33,6 +33,15 @@ export const type = [
 	'reset-password',
 	'change-email',
 ] as const;
+
+export const VerificationTypeSchema = z.enum(type);
+export const VerifySchema = z
+	.object({
+		target: z.string(),
+		type: VerificationTypeSchema,
+		redirectTo: RedirectSchema,
+	})
+	.merge(OTPSchema);
 
 export async function action({ request }: ActionFunctionArgs) {
 	const formData = await request.formData();
@@ -78,7 +87,9 @@ export async function action({ request }: ActionFunctionArgs) {
 	if (type === 'onboarding') {
 		await deleteVerification();
 		return await handleOnbaordingVerification({ email: target, request });
+		console.log('onboarding');
 	} else if (type === '2fa') {
+		console.log('2fa');
 		return await handleTwoFAVerification({
 			body: formData,
 			request,

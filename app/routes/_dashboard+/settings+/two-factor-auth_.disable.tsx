@@ -13,14 +13,17 @@ import { db } from '~/db/index.server';
 import { verifications } from '~/db/schema';
 import { twoFactorAuthType } from './two-factor-auth';
 
-export async function loader({ request }: LoaderFunctionArgs) {
-	await requireRecentTwoFactorAuth(request);
-	return json({});
-}
+// export async function loader({ request }: LoaderFunctionArgs) {
+// 	await requireRecentTwoFactorAuth(request);
+// 	return json({});
+// }
 
 export async function action({ request }: ActionFunctionArgs) {
+	console.log('action');
 	const user = await requireUser(request);
+	console.log('user', user);
 	await requireRecentTwoFactorAuth(request, user);
+	console.log('after requireRecentTwoFactorAuth');
 
 	await db
 		.delete(verifications)
