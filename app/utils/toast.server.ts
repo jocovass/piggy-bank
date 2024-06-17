@@ -1,6 +1,6 @@
+import { createId as cuid2 } from '@paralleldrive/cuid2';
 import { createCookieSessionStorage, redirect } from '@remix-run/node';
-import { type z } from 'zod';
-import { ServerToastSchema } from './validation-schemas';
+import { z } from 'zod';
 
 export const toastSessionStorage = createCookieSessionStorage({
 	cookie: {
@@ -14,6 +14,16 @@ export const toastSessionStorage = createCookieSessionStorage({
 });
 
 export const toastSessionKey = 'pg_toast_key';
+
+export const ServerToastSchema = z.object({
+	description: z.string().optional(),
+	id: z
+		.string()
+		.optional()
+		.default(() => cuid2()),
+	title: z.string(),
+	type: z.enum(['message', 'error', 'success']).default('message'),
+});
 
 export type ServerToast = z.infer<typeof ServerToastSchema>;
 export type ServerToastInput = z.input<typeof ServerToastSchema>;

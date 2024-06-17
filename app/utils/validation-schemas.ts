@@ -1,6 +1,4 @@
-import { createId as cuid2 } from '@paralleldrive/cuid2';
 import { z } from 'zod';
-import { type } from '~/app/routes/_auth+/verify';
 
 export const EmailSchema = z.string().email();
 export const RememberSchema = z.boolean().optional();
@@ -12,16 +10,6 @@ export const PasswordSchema = z
 	.regex(/[a-z]/, 'Must contain lowercase letter')
 	.regex(/[0-9]/, 'Must contain number')
 	.regex(/[^a-z0-9\s]/i, 'Must contain special character');
-
-export const LoginSchema = z.object({
-	email: EmailSchema,
-	password: z.string({ required_error: 'Password is required' }),
-	remember: RememberSchema,
-});
-
-export const SignupSchema = z.object({
-	email: EmailSchema,
-});
 
 export const OnboardingSchema = z
 	.object({
@@ -50,22 +38,4 @@ export const OnboardingSchema = z
 
 export const OTPSchema = z.object({
 	otp: z.string().min(6).max(6),
-});
-export const VerificationTypeSchema = z.enum(type);
-export const VerifySchema = z
-	.object({
-		target: z.string(),
-		type: VerificationTypeSchema,
-		redirectTo: RedirectSchema,
-	})
-	.merge(OTPSchema);
-
-export const ServerToastSchema = z.object({
-	description: z.string().optional(),
-	id: z
-		.string()
-		.optional()
-		.default(() => cuid2()),
-	title: z.string(),
-	type: z.enum(['message', 'error', 'success']).default('message'),
 });

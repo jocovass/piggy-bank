@@ -10,8 +10,14 @@ import { z } from 'zod';
 import { Field } from '~/app/components/forms';
 import { Button } from '~/app/components/ui/button';
 import { createLoginSession, requireAnonymus } from '~/app/utils/auth.server';
-import { LoginSchema } from '~/app/utils/validation-schemas';
+import { EmailSchema, RememberSchema } from '~/app/utils/validation-schemas';
 import { handleNewSession } from './login.server';
+
+export const LoginSchema = z.object({
+	email: EmailSchema,
+	password: z.string({ required_error: 'Password is required' }),
+	remember: RememberSchema,
+});
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	await requireAnonymus(request);

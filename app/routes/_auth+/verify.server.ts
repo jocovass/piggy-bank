@@ -13,20 +13,18 @@ import { getDomainUrl } from '~/app/utils/misc';
 import { authSessionStorage } from '~/app/utils/session.server';
 import { redirectWithToast } from '~/app/utils/toast.server';
 import {
-	type VerifySchema,
-	type VerificationTypeSchema,
-} from '~/app/utils/validation-schemas';
-import {
 	verificationMaxAge,
 	verifySessionStorage,
 } from '~/app/utils/verification.server';
 import { db } from '~/db/index.server';
 import { type User, verifications } from '~/db/schema';
 import {
+	type VerifySchema,
 	verifyCodeParamKey,
 	verifyRedirectToParamKey,
 	verifyTargetParamKey,
 	verifyTypeParamKey,
+	type VerificationTypeSchema,
 } from './verify';
 
 export type VerifyFunctionArgs = {
@@ -137,6 +135,7 @@ export async function requireRecentTwoFactorAuth(
 ) {
 	const _user = user ?? (await requireUser(request));
 	const shouldReverify = await shouldRequestTwoFA(request, _user);
+	console.log('shouldReverify', shouldReverify);
 
 	if (shouldReverify) {
 		const url = new URL(request.url);

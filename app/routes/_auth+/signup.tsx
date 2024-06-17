@@ -7,9 +7,13 @@ import { Field } from '~/app/components/forms';
 import { Button } from '~/app/components/ui/button';
 import { sendEmail } from '~/app/utils/email.server';
 import { SignupEmail } from '~/app/utils/emailTemplates';
-import { SignupSchema } from '~/app/utils/validation-schemas';
+import { EmailSchema } from '~/app/utils/validation-schemas';
 import { db } from '~/db/index.server';
 import { prepareOtpVerification } from './verify.server';
+
+export const SignupSchema = z.object({
+	email: EmailSchema,
+});
 
 export async function action({ request }: ActionFunctionArgs) {
 	const formData = await request.formData();
