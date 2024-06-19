@@ -52,6 +52,7 @@ export function generateRedirectUrl({
 	target,
 }: GenerateRedirectUrl) {
 	const url = new URL(`${getDomainUrl(request)}/verify`);
+	console.log('url from generateRedirectUrl', url);
 	url.searchParams.set(verifyTypeParamKey, type);
 	url.searchParams.set(verifyTargetParamKey, target);
 	if (redirectUrl) {
@@ -145,8 +146,9 @@ export async function requireRecentTwoFactorAuth(
 			type: twoFactorAuthType,
 			redirectUrl: url.pathname + url.search,
 		});
+		console.log('after redirectUrl', redirectUrl);
 
-		throw redirectWithToast(redirectUrl.toString(), {
+		throw await redirectWithToast(redirectUrl.pathname + redirectUrl.search, {
 			title: 'Please Reverify',
 			description: '2FA is required for this action.',
 		});

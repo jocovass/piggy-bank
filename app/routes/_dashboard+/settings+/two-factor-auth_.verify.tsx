@@ -1,10 +1,11 @@
 import { getFormProps, useForm, useInputControl } from '@conform-to/react';
 import { getZodConstraint, parseWithZod } from '@conform-to/zod';
-import { verifyTOTP, getTOTPAuthUri } from '@epic-web/totp';
+import { UTCDate } from '@date-fns/utc';
+import { getTOTPAuthUri } from '@epic-web/totp';
 import {
 	type ActionFunctionArgs,
-	json,
 	type LoaderFunctionArgs,
+	json,
 	redirect,
 } from '@remix-run/node';
 import { Form, NavLink, useActionData, useLoaderData } from '@remix-run/react';
@@ -18,13 +19,15 @@ import {
 	InputOTPGroup,
 	InputOTPSlot,
 } from '~/app/components/ui/input-otp';
+import { isOtpCodeValid } from '~/app/routes/_auth+/verify.server';
 import { requireUser } from '~/app/utils/auth.server';
 import { getDomainUrl } from '~/app/utils/misc';
+import { authSessionStorage } from '~/app/utils/session.server';
 import { redirectWithToast } from '~/app/utils/toast.server';
 import { OTPSchema } from '~/app/utils/validation-schemas';
 import { db } from '~/db/index.server';
 import { verifications } from '~/db/schema';
-import { twoFactorAuthType } from './two-factor-auth';
+import { twoFactorAuthType, verifiedTimeKey } from './two-factor-auth';
 
 export const twoFactorAuthVerifyType = '2fa-verify';
 
@@ -81,37 +84,13 @@ export async function action({ request }: ActionFunctionArgs) {
 				return;
 			}
 
-			const twoFactorVerify = await db.query.verifications.findFirst({
-				columns: {
-					algorithm: true,
-					charSet: true,
-					digits: true,
-					secret: true,
-				},
-				where: (verification, { and, eq }) =>
-					and(
-						eq(verification.target, user.id),
-						eq(verification.type, twoFactorAuthVerifyType),
-					),
-			});
-
-			console.log(twoFactorVerify);
-			if (!twoFactorVerify) {
-				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
-					path: ['otp'],
-					message: 'Invalid verification code',
-				});
-				return;
-			}
-
-			const result = verifyTOTP({
+			const isValid = await isOtpCodeValid({
 				otp: data.otp,
-				...twoFactorVerify,
+				target: user.id,
+				type: twoFactorAuthVerifyType,
 			});
 
-			console.log(result);
-			if (!result) {
+			if (!isValid) {
 				ctx.addIssue({
 					code: z.ZodIssueCode.custom,
 					path: ['otp'],
@@ -160,11 +139,24 @@ export async function action({ request }: ActionFunctionArgs) {
 			),
 		);
 
-	return redirectWithToast('/settings/two-factor-auth', {
-		title: '2FA Enabled',
-		description: 'You can now login with 2FA',
-		type: 'success',
-	});
+	const authSession = await authSessionStorage.getSession(
+		request.headers.get('Cookie'),
+	);
+	authSession.set(verifiedTimeKey, UTCDate.now());
+
+	return redirectWithToast(
+		'/settings/two-factor-auth',
+		{
+			title: '2FA Enabled',
+			description: 'You can now login with 2FA',
+			type: 'success',
+		},
+		{
+			headers: {
+				'Set-Cookie': await authSessionStorage.commitSession(authSession),
+			},
+		},
+	);
 }
 
 export default function TwoFactorAuthVerify() {

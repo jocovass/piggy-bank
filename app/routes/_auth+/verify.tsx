@@ -30,6 +30,7 @@ export const verifyCodeParamKey = 'otp';
 export const type = [
 	'onboarding',
 	'2fa',
+	'2fa-verify',
 	'reset-password',
 	'change-email',
 ] as const;
