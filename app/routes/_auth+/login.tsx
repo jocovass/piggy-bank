@@ -54,8 +54,6 @@ export async function action({ request }: ActionFunctionArgs) {
 
 	const { session, remember } = submission.value;
 
-	console.log('BEFORE HANDLE NEW SESSION 💥');
-
 	return handleNewSession({ remember, request, session });
 }
 

@@ -19,11 +19,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-	console.log('action');
 	const user = await requireUser(request);
-	console.log('user', user);
 	await requireRecentTwoFactorAuth(request, user);
-	console.log('after requireRecentTwoFactorAuth');
 
 	await db
 		.delete(verifications)

@@ -52,7 +52,6 @@ export function generateRedirectUrl({
 	target,
 }: GenerateRedirectUrl) {
 	const url = new URL(`${getDomainUrl(request)}/verify`);
-	console.log('url from generateRedirectUrl', url);
 	url.searchParams.set(verifyTypeParamKey, type);
 	url.searchParams.set(verifyTargetParamKey, target);
 	if (redirectUrl) {
@@ -136,7 +135,6 @@ export async function requireRecentTwoFactorAuth(
 ) {
 	const _user = user ?? (await requireUser(request));
 	const shouldReverify = await shouldRequestTwoFA(request, _user);
-	console.log('shouldReverify', shouldReverify);
 
 	if (shouldReverify) {
 		const url = new URL(request.url);
@@ -146,7 +144,6 @@ export async function requireRecentTwoFactorAuth(
 			type: twoFactorAuthType,
 			redirectUrl: url.pathname + url.search,
 		});
-		console.log('after redirectUrl', redirectUrl);
 
 		throw await redirectWithToast(redirectUrl.pathname + redirectUrl.search, {
 			title: 'Please Reverify',

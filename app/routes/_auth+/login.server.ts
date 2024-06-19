@@ -36,7 +36,7 @@ export async function handleNewSession({
 
 	if (userTwoFA) {
 		const verifySession = await verifySessionStorage.getSession(
-			request.headers.get('cookie'),
+			request.headers.get('ookie'),
 		);
 		verifySession.set(rememberMeKey, remember);
 		verifySession.set(unverifiedsessionIdKey, session.id);
@@ -47,7 +47,7 @@ export async function handleNewSession({
 			target: session.userId,
 		});
 
-		throw redirectWithToast(
+		throw await redirectWithToast(
 			url.toString(),
 			{
 				title: 'Two-Factor Authentication',
@@ -61,7 +61,7 @@ export async function handleNewSession({
 		);
 	} else {
 		const authSession = await authSessionStorage.getSession(
-			request.headers.get('cookie'),
+			request.headers.get('Cookie'),
 		);
 		authSession.set(sessionKey, session.id);
 
@@ -94,7 +94,7 @@ export async function handleTwoFAVerification({
 	authSession.set(verifiedTimeKey, UTCDate.now());
 	const unverifiedSessionId = verifySession.get(unverifiedsessionIdKey);
 	const session = await db.query.sessions.findFirst({
-		columns: { expirationDate: true },
+		columns: { id: true, expirationDate: true },
 		where: eq(sessions.id, unverifiedSessionId),
 	});
 
@@ -111,7 +111,7 @@ export async function handleTwoFAVerification({
 			'Set-Cookie',
 			await authSessionStorage.destroySession(authSession),
 		);
-		throw redirectWithToast(
+		throw await redirectWithToast(
 			'/login',
 			{
 				title: 'Invalid session',
@@ -122,6 +122,7 @@ export async function handleTwoFAVerification({
 		);
 	}
 
+	authSession.set(sessionKey, session.id);
 	const { redirectTo } = submission.value;
 	const remember = verifySession.get(rememberMeKey);
 
