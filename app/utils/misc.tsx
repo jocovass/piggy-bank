@@ -25,3 +25,30 @@ export function getReferrerRoute(request: Request) {
 	}
 	return '/';
 }
+
+export function combineHeaders(
+	...headers: (ResponseInit['headers'] | undefined | null)[]
+) {
+	const mergedHeaders = new Headers();
+	for (const header of headers) {
+		if (!header) continue;
+		for (const [key, value] of new Headers(header).entries()) {
+			mergedHeaders.append(key, value);
+		}
+	}
+	return mergedHeaders;
+}
+
+export function combineResponseInit(
+	...inits: Array<ResponseInit | null | undefined>
+) {
+	let combinedInit: ResponseInit = {};
+	for (const val of inits) {
+		combinedInit = {
+			...val,
+			headers: combineHeaders(val?.headers, combinedInit.headers),
+		};
+	}
+
+	return combinedInit;
+}

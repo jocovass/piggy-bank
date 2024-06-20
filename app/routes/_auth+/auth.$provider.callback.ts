@@ -15,7 +15,8 @@ import {
 } from '~/app/utils/toast.server';
 import { db } from '~/db/index.server';
 import { connections, sessions, users } from '~/db/schema';
-import { ProviderNameSchema, type ProviderName } from './auth.$provider';
+import { ProviderNameSchema } from './auth.$provider';
+import { handleNewSession } from './login.server';
 
 const destroyRedirectTo = { 'Set-Cookie': destroyRedirectToHeader };
 
@@ -105,11 +106,18 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	 * Provider was used to sign up before create a new session for user
 	 */
 	if (existingConnection) {
-		return await makeSession({
-			provider,
-			request,
-			userId: existingConnection.userId,
-		});
+		return await makeSession(
+			{
+				request,
+				userId: existingConnection.userId,
+			},
+			{
+				headers: await createToastHeader({
+					title: 'Auth successful',
+					description: `You have successfully authenticated with ${provider}.`,
+				}),
+			},
+		);
 	}
 
 	/**
@@ -129,7 +137,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		});
 
 		return await makeSession(
-			{ provider, request, userId: user.id },
+			{ request, userId: user.id },
 			{
 				headers: await createToastHeader({
 					title: 'Connected',
@@ -157,16 +165,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		userId: newUser.id,
 	});
 
-	return await makeSession({ provider, request, userId: newUser.id });
+	return await makeSession({ request, userId: newUser.id });
 }
 
 async function makeSession(
 	{
-		provider,
 		request,
 		userId,
 	}: {
-		provider: ProviderName;
 		request: Request;
 		userId: string;
 	},
@@ -184,11 +190,11 @@ async function makeSession(
 		request.headers.get('Cookie'),
 	);
 	authSession.set(sessionKey, session.id);
-	return redirectWithToast(
-		'/',
+
+	return handleNewSession(
 		{
-			title: 'Auth successful',
-			description: `You have successfully authenticated with ${provider}.`,
+			request,
+			session,
 		},
 		{
 			headers: combineHeaders(responseInit?.headers, destroyRedirectTo, {

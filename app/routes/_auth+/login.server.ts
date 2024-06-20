@@ -9,6 +9,7 @@ import {
 	verifiedTimeKey,
 } from '~/app/routes/_dashboard+/settings+/two-factor-auth';
 import { sessionKey } from '~/app/utils/auth.server';
+import { combineResponseInit } from '~/app/utils/misc';
 import { authSessionStorage } from '~/app/utils/session.server';
 import { redirectWithToast } from '~/app/utils/toast.server';
 import { verifySessionStorage } from '~/app/utils/verification.server';
@@ -18,15 +19,20 @@ import { type VerifyFunctionArgs, generateRedirectUrl } from './verify.server';
 
 export const rememberMeKey = 'remember';
 
-export async function handleNewSession({
-	remember = false,
-	request,
-	session,
-}: {
-	remember?: boolean;
-	request: Request;
-	session: Session;
-}) {
+export async function handleNewSession(
+	{
+		redirectTo = '/',
+		remember = false,
+		request,
+		session,
+	}: {
+		redirectTo?: string;
+		remember?: boolean;
+		request: Request;
+		session: Session;
+	},
+	responseInit?: ResponseInit,
+) {
 	const userTwoFA = await db.query.verifications.findFirst({
 		where: and(
 			eq(verifications.target, session.userId),
@@ -36,28 +42,29 @@ export async function handleNewSession({
 
 	if (userTwoFA) {
 		const verifySession = await verifySessionStorage.getSession(
-			request.headers.get('ookie'),
+			request.headers.get('Cookie'),
 		);
 		verifySession.set(rememberMeKey, remember);
 		verifySession.set(unverifiedsessionIdKey, session.id);
 
 		const url = generateRedirectUrl({
 			request,
+			redirectUrl: redirectTo,
 			type: '2fa',
 			target: session.userId,
 		});
 
-		throw await redirectWithToast(
+		throw redirect(
 			url.toString(),
-			{
-				title: 'Two-Factor Authentication',
-				description: 'Please enter the code from your authenticator app.',
-			},
-			{
-				headers: {
-					'Set-Cookie': await verifySessionStorage.commitSession(verifySession),
+			combineResponseInit(
+				{
+					headers: {
+						'Set-Cookie':
+							await verifySessionStorage.commitSession(verifySession),
+					},
 				},
-			},
+				responseInit,
+			),
 		);
 	} else {
 		const authSession = await authSessionStorage.getSession(
@@ -65,13 +72,19 @@ export async function handleNewSession({
 		);
 		authSession.set(sessionKey, session.id);
 
-		throw redirect('/', {
-			headers: {
-				'Set-Cookie': await authSessionStorage.commitSession(authSession, {
-					expires: remember ? session.expirationDate : undefined,
-				}),
-			},
-		});
+		throw redirect(
+			'/',
+			combineResponseInit(
+				{
+					headers: {
+						'Set-Cookie': await authSessionStorage.commitSession(authSession, {
+							expires: remember ? session.expirationDate : undefined,
+						}),
+					},
+				},
+				responseInit,
+			),
+		);
 	}
 }
 
