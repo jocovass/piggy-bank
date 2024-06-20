@@ -135,7 +135,6 @@ export async function requireRecentTwoFactorAuth(
 ) {
 	const _user = user ?? (await requireUser(request));
 	const shouldReverify = await shouldRequestTwoFA(request, _user);
-	console.log('shouldReverify', shouldReverify);
 
 	if (shouldReverify) {
 		const url = new URL(request.url);
@@ -146,7 +145,7 @@ export async function requireRecentTwoFactorAuth(
 			redirectUrl: url.pathname + url.search,
 		});
 
-		throw redirectWithToast(redirectUrl.toString(), {
+		throw await redirectWithToast(redirectUrl.pathname + redirectUrl.search, {
 			title: 'Please Reverify',
 			description: '2FA is required for this action.',
 		});
