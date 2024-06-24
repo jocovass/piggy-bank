@@ -40,7 +40,7 @@ export function Document({ children }: { children: React.ReactNode }) {
 				<Meta />
 				<Links />
 			</head>
-			<body>
+			<body className="dark">
 				{children}
 				<ScrollRestoration />
 				<Scripts />
