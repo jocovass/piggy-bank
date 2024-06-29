@@ -3,6 +3,10 @@ import {
 	type LoaderFunctionArgs,
 	json,
 } from '@remix-run/node';
+import { useFetcher } from '@remix-run/react';
+import RenderPlaidLink from '~/app/components/RenderPlaidLink';
+import { Button } from '~/app/components/ui/button';
+import { type action } from '~/app/routes/_resources+/generate-link-token';
 
 export const meta: MetaFunction = () => {
 	return [
@@ -16,9 +20,24 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function Dashboard() {
+	const getLink = useFetcher<typeof action>();
+
+	console.log(getLink?.data);
 	return (
 		<div>
-			<p>DASHBOARD INDEX PAGE</p>
+			<p>
+				Welcome to your new dashboard! Connect a bank account to get started.
+			</p>
+			<getLink.Form method="POST" action="/generate-link-token">
+				<Button type="submit">Connect account</Button>
+			</getLink.Form>
+
+			{getLink.data?.data.link_token && (
+				<RenderPlaidLink
+					link={getLink.data.data.link_token}
+					userId={getLink.data.data.userId}
+				/>
+			)}
 		</div>
 	);
 }
