@@ -4,7 +4,6 @@ import { plaidClient } from '~/app/services/plaid.server';
 import { requireUser } from '~/app/utils/auth.server';
 
 export async function action({ request, params }: ActionFunctionArgs) {
-	console.log('GENERATE LINK TOKENJK');
 	const user = await requireUser(request);
 	const linkTokenResponse = await plaidClient.linkTokenCreate({
 		access_tokens: [],
