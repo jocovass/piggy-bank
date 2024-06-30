@@ -4,7 +4,7 @@ import {
 	json,
 } from '@remix-run/node';
 import { useFetcher } from '@remix-run/react';
-import RenderPlaidLink from '~/app/components/RenderPlaidLink';
+import LaunchLink from '~/app/components/launch-link';
 import { Button } from '~/app/components/ui/button';
 import { type action } from '~/app/routes/_resources+/generate-link-token';
 
@@ -33,7 +33,7 @@ export default function Dashboard() {
 			</getLink.Form>
 
 			{getLink.data?.data.link_token && (
-				<RenderPlaidLink
+				<LaunchLink
 					link={getLink.data.data.link_token}
 					userId={getLink.data.data.userId}
 				/>
