@@ -2,6 +2,7 @@ import { UTCDate } from '@date-fns/utc';
 import { createId as cuid } from '@paralleldrive/cuid2';
 import { relations } from 'drizzle-orm';
 import {
+	boolean,
 	index,
 	integer,
 	pgTable,
@@ -198,21 +199,101 @@ export const verifications = pgTable(
 	},
 );
 
+export const bankConnections = pgTable(
+	'bank_connections',
+	{
+		id: varchar('id', { length: 25 })
+			.primaryKey()
+			.notNull()
+			.$defaultFn(() => cuid()),
+		user_id: varchar('user_id', { length: 25 })
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+		/**
+		 * The bank id is a unique and stable identifier assigned by Plaid to
+		 * each financial institution they support.
+		 */
+		institution_id: text('institution_id').notNull(),
+		/**
+		 * Bank name.
+		 */
+		name: text('name').notNull(),
+		/**
+		 * Bank primary color.
+		 */
+		primary_color: text('primary_color'),
+		/**
+		 * Logo of the bank.
+		 */
+		logo: text('logo'),
+		/**
+		 * An "Item" represents a login at a financial institution. A single item
+		 * can be associated with multiple "accounts". To retrieve transaction data
+		 * from these accounts you can use the same "access_token".
+		 */
+		item_id: text('item_id').notNull(),
+		/**
+		 * Access token issued by plaid after a successful login. This token can be
+		 * used to retrieve transaction data from the financial institution.
+		 *
+		 * This token has an expiration data of 90 days, after we need to ask the
+		 * users consent again to access their financial data.
+		 *
+		 * This regualtion falls under the Second Payment Services Directive (PSD2)
+		 * https://www.finance.gov/regulations-policy/second-payment-services-directive-psd-2/
+		 */
+		access_token: text('access_token').notNull(),
+		/**
+		 * The RFC3339 timestamp after which the consent provided by the end user
+		 * will expire. Will need to request a new access_token.
+		 */
+		consent_expiration_time: timestamp('consent_expiration_time', {
+			withTimezone: true,
+		}),
+		/**
+		 * A cursor is tied to an item, which represents a set of login credentials
+		 * and associated accounts for a user at a financial institution.
+		 *
+		 * When you fetch transactions incrementally, the cursor helps Plaid know
+		 * where to start the next fetch to get only new or updated transactions.
+		 */
+		transaction_cursor: text('transaction_cursor'),
+		/**
+		 * A flag that indicates whether the bank connection is active or not.
+		 */
+		is_active: boolean('is_active').notNull().default(true),
+		created_at: timestamp('created_at', { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+		updated_at: timestamp('updated_at', { withTimezone: true })
+			.notNull()
+			.defaultNow()
+			.$onUpdateFn(() => new UTCDate()),
+	},
+	table => {
+		return {
+			index_bank_connections_userId: index('index_bank_connections_userId').on(
+				table.user_id,
+			),
+		};
+	},
+);
+
 /**
- * User
+ * User types
  */
 export const selectUserSchema = createSelectSchema(users);
 export const insertUserChema = createInsertSchema(users);
 export type User = z.infer<typeof selectUserSchema>;
 
 /**
- * Password
+ * Password types
  */
 export const selectPasswordSchema = createSelectSchema(passwords);
 export type Password = z.infer<typeof selectPasswordSchema>;
 
 /**
- * Session
+ * Session types
  */
 export const selectSessionSchema = createSelectSchema(sessions);
 export type Session = z.infer<typeof selectSessionSchema>;
