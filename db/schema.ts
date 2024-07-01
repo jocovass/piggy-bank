@@ -3,6 +3,7 @@ import { createId as cuid } from '@paralleldrive/cuid2';
 import { relations } from 'drizzle-orm';
 import {
 	boolean,
+	decimal,
 	index,
 	integer,
 	pgTable,
@@ -41,6 +42,9 @@ export const userRelations = relations(users, ({ one, many }) => ({
 	}),
 	connections: many(connections, {
 		relationName: 'user_connections',
+	}),
+	bankConnections: many(bankConnections, {
+		relationName: 'user_bank_connections',
 	}),
 }));
 
@@ -275,6 +279,74 @@ export const bankConnections = pgTable(
 			index_bank_connections_userId: index('index_bank_connections_userId').on(
 				table.user_id,
 			),
+		};
+	},
+);
+
+export const bankConnectionRelations = relations(
+	bankConnections,
+	({ one }) => ({
+		user: one(users, {
+			fields: [bankConnections.user_id],
+			references: [users.id],
+		}),
+	}),
+);
+
+export const accounts = pgTable(
+	'accounts',
+	{
+		id: varchar('id', { length: 25 })
+			.primaryKey()
+			.notNull()
+			.$defaultFn(() => cuid()),
+		/**
+		 * An "Item" represents a login at a financial institution. A single item
+		 * can be associated with multiple "accounts". To retrieve transaction data
+		 * from these accounts you can use the same "access_token".
+		 */
+		item_id: text('item_id').notNull(),
+		/**
+		 * Plaid unique identifier for the account.
+		 */
+		plaid_account_id: text('account_id').notNull(),
+		/**
+		 * The name of the account.
+		 */
+		name: text('name').notNull(),
+		/**
+		 *	The official name given byt the financial institution.
+		 */
+		official_name: text('official_name'),
+		/**
+		 * The last 2-4 alphanumeric characters of an account's official account number.
+		 */
+		mask: text('mask'),
+		/**
+		 * The total amount of funds in or owed by the account.
+		 *
+		 * For credi type accounts, a positive balance idicates the amount owed, a
+		 * negative amount indicates the lneder owing the accound holder.
+		 */
+		current_balance: decimal('current_balance', { precision: 20, scale: 2 }),
+		/**
+		 * The amount of funds available to be withdrawn from the account.
+		 */
+		available_balance: decimal('available_balance', {
+			precision: 20,
+			scale: 2,
+		}),
+		/**
+		 * The ISO 4217 currency code of the balance.
+		 */
+		iso_currency_code: text('iso_currency_code'),
+		unofficial_currency_code: text('unofficial_currency_code'),
+		type: text('type').notNull(),
+		subtype: text('subtype'),
+	},
+	table => {
+		return {
+			index_accounts_item_id: index('index_accounts_item_id').on(table.item_id),
 		};
 	},
 );
