@@ -46,6 +46,12 @@ export const userRelations = relations(users, ({ one, many }) => ({
 	bankConnections: many(bankConnections, {
 		relationName: 'user_bank_connections',
 	}),
+	accounts: many(accounts, {
+		relationName: 'user_accounts',
+	}),
+	transactions: many(transactions, {
+		relationName: 'user_transactions',
+	}),
 }));
 
 export const passwords = pgTable(
@@ -285,10 +291,13 @@ export const bankConnections = pgTable(
 
 export const bankConnectionRelations = relations(
 	bankConnections,
-	({ one }) => ({
+	({ one, many }) => ({
 		user: one(users, {
 			fields: [bankConnections.user_id],
 			references: [users.id],
+		}),
+		accounts: many(accounts, {
+			relationName: 'bank_connection_accounts',
 		}),
 	}),
 );
@@ -300,12 +309,18 @@ export const accounts = pgTable(
 			.primaryKey()
 			.notNull()
 			.$defaultFn(() => cuid()),
-		/**
-		 * An "Item" represents a login at a financial institution. A single item
-		 * can be associated with multiple "accounts". To retrieve transaction data
-		 * from these accounts you can use the same "access_token".
-		 */
-		item_id: text('item_id').notNull(),
+		bank_connection_id: varchar('bank_connection_id', { length: 25 })
+			.notNull()
+			.references(() => bankConnections.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		user_id: varchar('user_id', { length: 25 })
+			.notNull()
+			.references(() => users.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
 		/**
 		 * Plaid unique identifier for the account.
 		 */
@@ -343,13 +358,137 @@ export const accounts = pgTable(
 		unofficial_currency_code: text('unofficial_currency_code'),
 		type: text('type').notNull(),
 		subtype: text('subtype'),
+		created_at: timestamp('created_at', { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+		updated_at: timestamp('updated_at', { withTimezone: true })
+			.notNull()
+			.defaultNow()
+			.$onUpdateFn(() => new UTCDate()),
 	},
 	table => {
 		return {
-			index_accounts_item_id: index('index_accounts_item_id').on(table.item_id),
+			index_bank_connection_id: index('index_bank_connections_id').on(
+				table.bank_connection_id,
+			),
 		};
 	},
 );
+
+export const accountRelations = relations(accounts, ({ one, many }) => ({
+	bankConnection: one(bankConnections, {
+		fields: [accounts.bank_connection_id],
+		references: [bankConnections.id],
+	}),
+	user: one(users, {
+		fields: [accounts.user_id],
+		references: [users.id],
+	}),
+	transactions: many(transactions, {
+		relationName: 'account_transactions',
+	}),
+}));
+
+export const transactions = pgTable(
+	'transactions',
+	{
+		id: varchar('id', { length: 25 })
+			.primaryKey()
+			.notNull()
+			.$defaultFn(() => cuid()),
+		account_id: varchar('account_id', { length: 25 })
+			.notNull()
+			.references(() => accounts.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		user_id: varchar('user_id', { length: 25 })
+			.notNull()
+			.references(() => users.id, {
+				onDelete: 'cascade',
+				onUpdate: 'cascade',
+			}),
+		/**
+		 * The settled value of the transaction.
+		 */
+		amount: decimal('amount', { precision: 20, scale: 2 }).notNull(),
+		/**
+		 * The ISO 4217 currency code of the transaction.
+		 */
+		iso_currency_code: text('iso_currency_code'),
+		/**
+		 * The unofficial currency code of the transaction.
+		 */
+		unofficial_currency_code: text('unofficial_currency_code'),
+		/**
+		 * The merchant name.
+		 * This field correponds to the "mercahnt_name" field in plaid but if that field
+		 * is not peresnt we use the "name" field isntead.
+		 */
+		name: text('name').notNull(),
+		/**
+		 * Pending transactions details may change before they are settled.
+		 */
+		pending: boolean('pending').notNull(),
+		/**
+		 * Unique id for the transaction.
+		 */
+		transaction_id: text('transaction_id').notNull(),
+		/**
+		 * The URL of a logo associated with this transaction.
+		 */
+		logo_url: text('logo_url'),
+		/**
+		 * Date and tiem when the transaction was authorized.
+		 */
+		authorized_date: timestamp('authorized_date', { withTimezone: true }),
+		/**
+		 * The channel used to make a payment. i.e. "online" | "in store"
+		 */
+		payment_channel: text('payment_channel').notNull(),
+		/**
+		 * A high level category that communicates the broad category of the transaction.
+		 */
+		category: text('category'),
+		/**
+		 * A granular category conveying the transaction's intent. This field can also
+		 * be used as a unique identifier for the category
+		 */
+		subcategory: text('subcategory'),
+		/**
+		 * A flag that indicates whether a transaction is active or not.
+		 */
+		is_active: boolean('is_active').notNull().default(true),
+		created_at: timestamp('created_at', { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+		updated_at: timestamp('updated_at', { withTimezone: true })
+			.notNull()
+			.defaultNow()
+			.$onUpdateFn(() => new UTCDate()),
+	},
+	table => {
+		return {
+			index_transactions_account_id: index('index_transactions_account_id').on(
+				table.account_id,
+			),
+			index_transactions_user_id: index('index_transactions_user_id').on(
+				table.user_id,
+			),
+		};
+	},
+);
+
+export const transactionRelations = relations(transactions, ({ one }) => ({
+	account: one(accounts, {
+		fields: [transactions.account_id],
+		references: [accounts.id],
+	}),
+	user: one(users, {
+		fields: [transactions.user_id],
+		references: [users.id],
+	}),
+}));
 
 /**
  * User types
