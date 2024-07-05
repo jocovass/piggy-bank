@@ -1,19 +1,29 @@
 import { useFetcher } from '@remix-run/react';
-import { useEffect } from 'react';
-import { usePlaidLink } from 'react-plaid-link';
+import { useCallback, useEffect } from 'react';
+import {
+	type PlaidLinkOnSuccess,
+	type PlaidLinkOnExit,
+	type PlaidLinkOnEvent,
+	type PlaidLinkOptionsWithLinkToken,
+	usePlaidLink,
+} from 'react-plaid-link';
+import { plaidOauthConfigKey } from '~/app/routes/_dashboard+/plaid-oauth';
 
 export default function LaunchLink({
+	isOauth = false,
+	itemId,
 	link,
 	userId,
 }: {
+	isOauth?: boolean;
+	itemId?: string;
 	link: string;
 	userId: string;
 }) {
 	const exchangeToken = useFetcher();
 
-	const { open, ready } = usePlaidLink({
-		onSuccess: (publicToken, metadata) => {
-			console.log(publicToken, metadata);
+	const onSuccess = useCallback<PlaidLinkOnSuccess>(
+		(publicToken, metadata) => {
 			exchangeToken.submit(
 				{
 					publicToken,
@@ -22,20 +32,66 @@ export default function LaunchLink({
 				{ action: '/exchange-public-token', method: 'POST' },
 			);
 		},
-		onExit: error => {
-			console.log('exit');
-		},
-		onEvent: event => {
-			console.log(event);
-		},
+		[exchangeToken, userId],
+	);
+
+	const onExit = useCallback<PlaidLinkOnExit>(error => {
+		if (error && error.error_code === 'IVALID_LINK_TOKEN') {
+			// generate new link
+			console.log('error', error);
+		}
+	}, []);
+
+	const onEvent = useCallback<PlaidLinkOnEvent>(event => {
+		console.log(event);
+	}, []);
+
+	const config: PlaidLinkOptionsWithLinkToken = {
 		token: link,
-	});
+		onSuccess,
+		onExit,
+		onEvent,
+	};
+
+	if (isOauth) {
+		/**
+		 * Pass in the received redirect URI, which contains an OAuth state ID parameter
+		 * that is required to re-initialize Link
+		 */
+		config.receivedRedirectUri = window.location.href;
+	}
+
+	const { open, ready, error } = usePlaidLink(config);
 
 	useEffect(() => {
-		if (ready) {
+		if (ready && isOauth) {
+			open();
+		} else if (ready) {
+			/**
+			 * Non OAuth case:
+			 * Store the link token in local storage so we can use it later if needed
+			 * by OAuth.
+			 */
+			localStorage.setItem(
+				plaidOauthConfigKey,
+				JSON.stringify({
+					itemId,
+					link,
+					userId,
+				}),
+			);
 			open();
 		}
-	}, [link, open, ready, userId]);
+	}, [isOauth, itemId, link, open, ready, userId]);
+
+	if (error) {
+		return (
+			<>
+				<p>There was an error while trying to authenticate with Plaidk</p>
+				<p>{error.message}</p>
+			</>
+		);
+	}
 
 	return <></>;
 }
