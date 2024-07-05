@@ -7,6 +7,7 @@ import { useFetcher } from '@remix-run/react';
 import LaunchLink from '~/app/components/launch-link';
 import { Button } from '~/app/components/ui/button';
 import { type action } from '~/app/routes/_resources+/generate-link-token';
+import { useUser } from '~/app/utils/user';
 
 export const meta: MetaFunction = () => {
 	return [
@@ -20,24 +21,26 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function Dashboard() {
-	const getLink = useFetcher<typeof action>();
+	const getPublicLink = useFetcher<typeof action>();
+	const user = useUser();
+	const linkToken =
+		getPublicLink.data?.status === 'success'
+			? getPublicLink?.data?.data.link_token
+			: null;
+	const error =
+		getPublicLink.data?.status === 'error' ? getPublicLink?.data?.errors : null;
 
-	console.log(getLink?.data);
 	return (
 		<div>
 			<p>
 				Welcome to your new dashboard! Connect a bank account to get started.
 			</p>
-			<getLink.Form method="POST" action="/generate-link-token">
+			<getPublicLink.Form method="POST" action="/generate-link-token">
 				<Button type="submit">Connect account</Button>
-			</getLink.Form>
+			</getPublicLink.Form>
+			{error && <p>{error.displayMessage}</p>}
 
-			{getLink.data?.data.link_token && (
-				<LaunchLink
-					link={getLink.data.data.link_token}
-					userId={getLink.data.data.userId}
-				/>
-			)}
+			{linkToken && <LaunchLink link={linkToken} userId={user.id} />}
 		</div>
 	);
 }

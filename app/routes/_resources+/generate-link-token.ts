@@ -1,26 +1,40 @@
 import { json, type ActionFunctionArgs } from '@remix-run/node';
-import { CountryCode, Products } from 'plaid';
-import { plaidClient } from '~/app/services/plaid.server';
+import { generateLinkToken, isPliadError } from '~/app/services/plaid.server';
 import { requireUser } from '~/app/utils/auth.server';
 
-export async function action({ request, params }: ActionFunctionArgs) {
+export async function action({ request }: ActionFunctionArgs) {
 	const user = await requireUser(request);
-	const linkTokenResponse = await plaidClient.linkTokenCreate({
-		access_tokens: [],
-		user: { client_user_id: user.id },
-		products: [Products.Transactions],
-		client_name: 'Piggy Bank',
-		language: 'en',
-		country_codes: [CountryCode.Gb],
-	});
+	try {
+		const { link_token } = await generateLinkToken({
+			userId: user.id,
+			request,
+		});
 
-	return json(
-		{
-			data: {
-				...linkTokenResponse.data,
-				userId: user.id,
-			},
-		},
-		{ status: 200 },
-	);
+		return json(
+			{
+				data: {
+					link_token,
+				},
+				status: 'success',
+			} as const,
+			{ status: 200 },
+		);
+	} catch (err) {
+		let error;
+		if (isPliadError(err)) {
+			error = {
+				code: err.error_code,
+				displayMessage: err.display_message,
+				message: err.error_message,
+			};
+		} else {
+			error = {
+				code: 'unknown',
+				displayMessage: 'An unknown error occurred',
+				message: 'An unknown error occurred',
+			};
+		}
+
+		return json({ errors: error, status: 'error' } as const, { status: 400 });
+	}
 }

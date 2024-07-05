@@ -5,11 +5,9 @@ import { usePlaidLink } from 'react-plaid-link';
 export default function LaunchLink({
 	link,
 	userId,
-	setError,
 }: {
 	link: string;
 	userId: string;
-	setError: (error: string) => void;
 }) {
 	const exchangeToken = useFetcher();
 
@@ -24,7 +22,7 @@ export default function LaunchLink({
 				{ action: '/exchange-public-token', method: 'POST' },
 			);
 		},
-		onExit: () => {
+		onExit: error => {
 			console.log('exit');
 		},
 		onEvent: event => {
