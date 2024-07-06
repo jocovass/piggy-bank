@@ -56,6 +56,13 @@ export async function generateLinkToken({
 	const linkTokenResponse = await plaidClient.linkTokenCreate({
 		access_tokens: accessTokens,
 		user: { client_user_id: userId },
+		/**
+		 * This is used to test the "returning user" flow. It means if the user
+		 * specifies their phone number plaid will save their authentiacted institutions
+		 * for quick access in the future. The "link_customization_name" prop is used
+		 * to test it in sandbox mode.
+		 */
+		// link_customization_name: 'REMEMBER_ME_SANDBOX',
 		products: [Products.Transactions],
 		transactions: {
 			days_requested: 730,
@@ -64,7 +71,12 @@ export async function generateLinkToken({
 		language: 'en',
 		redirect_uri: domain + '/plaid-oauth',
 		country_codes: [CountryCode.Gb],
-		webhook: domain + 'plaid-webhook',
+		/**
+		 * Needs a producation url
+		 */
+		webhook: domain.startsWith('https://')
+			? domain + '/plaid-webhook'
+			: undefined,
 	});
 	return linkTokenResponse.data;
 }

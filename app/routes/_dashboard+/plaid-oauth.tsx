@@ -1,6 +1,6 @@
 import { type LoaderFunctionArgs, json } from '@remix-run/node';
 import { NavLink } from '@remix-run/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import LaunchLink from '~/app/components/launch-link';
 import { Button } from '~/app/components/ui/button';
 import { requireUser } from '~/app/utils/auth.server';
@@ -14,47 +14,42 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 /**
  * Route rendered when a user is redirected back to site from OAuth institution stie.
- * It initiates the link immediatedly with the original link token that was set in local storage from the inital link initiatialization.
+ * It initiates the link immediatedly with the original link token that was set
+ * in local storage from the inital link initiatialization.
  */
 export default function PlaidOauth() {
-	const [oAuthConfig] = useState(() => {
-		const parsedConfig = JSON.parse(
-			localStorage.getItem(plaidOauthConfigKey) || '',
-		);
+	const [link, setLink] = useState<string | undefined>();
+	const [itemId, setItemId] = useState<string | undefined>();
+	const [userId, setUserId] = useState<string | undefined>();
+	const [loading, setLoading] = useState(true);
 
-		const oAuthConfig: {
-			itemId?: string;
-			token?: string;
-			userId?: string;
-		} = {};
+	useEffect(() => {
+		if (typeof window !== 'undefined') {
+			const oAuthConfig = JSON.parse(
+				localStorage.getItem(plaidOauthConfigKey) || '',
+			) as {
+				itemId?: string;
+				link?: string;
+				userId?: string;
+			};
 
-		if (
-			parsedConfig &&
-			parsedConfig !== null &&
-			typeof parsedConfig === 'object'
-		) {
-			if ('itemId' in parsedConfig && typeof parsedConfig.itemId === 'string') {
-				oAuthConfig.itemId = parsedConfig.itemId;
-			}
-
-			if ('token' in parsedConfig && typeof parsedConfig.token === 'string') {
-				oAuthConfig.itemId = parsedConfig.token;
-			}
-
-			if ('userId' in parsedConfig && typeof parsedConfig.userId === 'string') {
-				oAuthConfig.itemId = parsedConfig.userId;
-			}
+			setUserId(oAuthConfig.userId);
+			setItemId(oAuthConfig.itemId);
+			setLink(oAuthConfig.link);
+			setLoading(false);
 		}
+	}, []);
 
-		return oAuthConfig;
-	});
+	if (loading) {
+		return <p>Loading...</p>;
+	}
 
-	if (!oAuthConfig.token || !oAuthConfig.userId) {
+	if (!link || !userId) {
 		return (
 			<>
 				<h1>Can't complete OAuth flow because link token is misssing</h1>
 				<Button asChild variant="secondary">
-					<NavLink to="/dashboard">Go to dashboard</NavLink>
+					<NavLink to="/">Go to dashboard</NavLink>
 				</Button>
 			</>
 		);
@@ -62,12 +57,7 @@ export default function PlaidOauth() {
 
 	return (
 		<>
-			<LaunchLink
-				isOauth
-				itemId={oAuthConfig.itemId}
-				link={oAuthConfig.token}
-				userId={oAuthConfig.userId}
-			/>
+			<LaunchLink isOauth itemId={itemId} link={link} userId={userId} />
 		</>
 	);
 }

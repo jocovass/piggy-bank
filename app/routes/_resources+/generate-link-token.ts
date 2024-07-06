@@ -20,6 +20,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			{ status: 200 },
 		);
 	} catch (err) {
+		console.log(err);
 		let error;
 		if (isPliadError(err)) {
 			error = {

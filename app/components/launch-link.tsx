@@ -8,6 +8,7 @@ import {
 	usePlaidLink,
 } from 'react-plaid-link';
 import { plaidOauthConfigKey } from '~/app/routes/_dashboard+/plaid-oauth';
+import { type action } from '~/app/routes/_resources+/exchange-public-token';
 
 export default function LaunchLink({
 	isOauth = false,
@@ -20,7 +21,7 @@ export default function LaunchLink({
 	link: string;
 	userId: string;
 }) {
-	const exchangeToken = useFetcher();
+	const exchangeToken = useFetcher<typeof action>();
 
 	const onSuccess = useCallback<PlaidLinkOnSuccess>(
 		(publicToken, metadata) => {
@@ -87,7 +88,7 @@ export default function LaunchLink({
 	if (error) {
 		return (
 			<>
-				<p>There was an error while trying to authenticate with Plaidk</p>
+				<p>There was an error while trying to authenticate with Plaid</p>
 				<p>{error.message}</p>
 			</>
 		);
