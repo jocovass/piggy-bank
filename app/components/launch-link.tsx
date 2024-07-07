@@ -8,7 +8,8 @@ import {
 	usePlaidLink,
 } from 'react-plaid-link';
 import { plaidOauthConfigKey } from '~/app/routes/_dashboard+/plaid-oauth';
-import { type action } from '~/app/routes/_resources+/exchange-public-token';
+import { type action as exchangeTokenAction } from '~/app/routes/_resources+/exchange-public-token';
+import { type action as generateLinkTokenAction } from '~/app/routes/_resources+/generate-link-token';
 
 export default function LaunchLink({
 	isOauth = false,
@@ -21,10 +22,11 @@ export default function LaunchLink({
 	link: string;
 	userId: string;
 }) {
-	const exchangeToken = useFetcher<typeof action>();
+	const generateLinkToken = useFetcher<typeof generateLinkTokenAction>();
+	const exchangeToken = useFetcher<typeof exchangeTokenAction>();
 
 	const onSuccess = useCallback<PlaidLinkOnSuccess>(
-		(publicToken, metadata) => {
+		publicToken => {
 			exchangeToken.submit(
 				{
 					publicToken,
@@ -36,12 +38,17 @@ export default function LaunchLink({
 		[exchangeToken, userId],
 	);
 
-	const onExit = useCallback<PlaidLinkOnExit>(error => {
-		if (error && error.error_code === 'IVALID_LINK_TOKEN') {
-			// generate new link
-			console.log('error', error);
-		}
-	}, []);
+	const onExit = useCallback<PlaidLinkOnExit>(
+		error => {
+			if (error && error.error_code === 'IVALID_LINK_TOKEN') {
+				generateLinkToken.submit(null, {
+					action: '/generate-link-token',
+					method: 'POST',
+				});
+			}
+		},
+		[generateLinkToken],
+	);
 
 	const onEvent = useCallback<PlaidLinkOnEvent>(event => {
 		console.log(event);
@@ -62,7 +69,7 @@ export default function LaunchLink({
 		config.receivedRedirectUri = window.location.href;
 	}
 
-	const { open, ready, error } = usePlaidLink(config);
+	const { open, ready } = usePlaidLink(config);
 
 	useEffect(() => {
 		if (ready && isOauth) {
@@ -85,14 +92,14 @@ export default function LaunchLink({
 		}
 	}, [isOauth, itemId, link, open, ready, userId]);
 
-	if (error) {
-		return (
-			<>
-				<p>There was an error while trying to authenticate with Plaid</p>
-				<p>{error.message}</p>
-			</>
-		);
-	}
+	// if (error) {
+	// 	return (
+	// 		<>
+	// 			<p>There was an error while trying to authenticate with Plaid</p>
+	// 			<p>{error.message}</p>
+	// 		</>
+	// 	);
+	// }
 
 	return <></>;
 }
