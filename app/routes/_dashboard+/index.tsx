@@ -1,8 +1,5 @@
-import {
-	type MetaFunction,
-	type LoaderFunctionArgs,
-	json,
-} from '@remix-run/node';
+import { type MetaFunction } from '@remix-run/node';
+import { AddBankAccount } from '~/app/routes/_resources+/generate-link-token';
 
 export const meta: MetaFunction = () => {
 	return [
@@ -11,14 +8,13 @@ export const meta: MetaFunction = () => {
 	];
 };
 
-export async function loader({ request }: LoaderFunctionArgs) {
-	return json({});
-}
-
 export default function Dashboard() {
 	return (
 		<div>
-			<p>DASHBOARD INDEX PAGE</p>
+			<p>
+				Welcome to your new dashboard! Connect a bank account to get started.
+			</p>
+			<AddBankAccount />
 		</div>
 	);
 }

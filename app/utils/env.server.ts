@@ -6,6 +6,8 @@ const schema = z.object({
 	GITHUB_CLIENT_SECRET: z.string(),
 	NODE_ENV: z.enum(['production', 'development', 'test'] as const),
 	MOCK: z.boolean().default(false),
+	PLAID_CLIENT_ID: z.string(),
+	PLAID_SECRET: z.string(),
 	RESEND_API_KEY: z.string(),
 	AUTH_SESSION_SECRET: z.string(),
 	CONNECTION_SESSION_SECRET: z.string(),

@@ -73,7 +73,7 @@ export function ErrorBoundary() {
 	const error = useRouteError();
 	const data = useLoaderData<typeof loader>();
 	return (
-		<Document theme={data.hints.theme}>
+		<Document theme={data?.hints.theme}>
 			<div className="flex items-center justify-center">
 				<h1 className="text-4xl">Something went wront!</h1>
 				<pre>{JSON.stringify(error, null, 2)}</pre>
