@@ -77,6 +77,7 @@ export async function generateLinkToken({
 		webhook: domain.startsWith('https://')
 			? domain + '/plaid-webhook'
 			: undefined,
+		update: { account_selection_enabled: true },
 	});
 	return linkTokenResponse.data;
 }
