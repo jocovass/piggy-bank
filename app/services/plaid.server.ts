@@ -114,3 +114,13 @@ export async function generateLinkToken({
 
 	return linkTokenResponse.data;
 }
+
+export async function getItem({ accessToken }: { accessToken: string }) {
+	const response = await plaidClient.itemGet({
+		access_token: accessToken,
+		client_id: process.env.PLAID_CLIENT_ID,
+		secret: process.env.PLAID_SECRET,
+	});
+
+	return response.data;
+}

@@ -39,3 +39,7 @@ export const OnboardingSchema = z
 export const OTPSchema = z.object({
 	otp: z.string().min(6).max(6),
 });
+
+export const ItemSchema = z.object({
+	itemId: z.string({ required_error: 'Item ID is required' }).optional(),
+});

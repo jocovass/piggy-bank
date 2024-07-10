@@ -1,22 +1,21 @@
 import { parseWithZod } from '@conform-to/zod';
 import { json, type ActionFunctionArgs } from '@remix-run/node';
 import { useFetcher } from '@remix-run/react';
-import { z } from 'zod';
 import LaunchLink from '~/app/components/launch-link';
 import { Button } from '~/app/components/ui/button';
 import { generateLinkToken, isPliadError } from '~/app/services/plaid.server';
 import { requireUser } from '~/app/utils/auth.server';
 import { createToastHeader } from '~/app/utils/toast.server';
 import { useUser } from '~/app/utils/user';
-
-const schema = z.object({
-	itemId: z.string().optional(),
-});
+import { ItemSchema } from '~/app/utils/validation-schemas';
 
 export async function action({ request }: ActionFunctionArgs) {
 	const user = await requireUser(request);
 	const form = await request.formData();
-	const submission = await parseWithZod(form, { schema, async: true });
+	const submission = await parseWithZod(form, {
+		schema: ItemSchema,
+		async: true,
+	});
 
 	try {
 		const { link_token } = await generateLinkToken({

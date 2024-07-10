@@ -8,6 +8,7 @@ import {
 	usePlaidLink,
 } from 'react-plaid-link';
 import { plaidOauthConfigKey } from '~/app/routes/_dashboard+/plaid-oauth';
+import { type action as bankConnectionAction } from '~/app/routes/_resources+/bank-connection';
 import { type action as exchangeTokenAction } from '~/app/routes/_resources+/exchange-public-token';
 import { type action as generateLinkTokenAction } from '~/app/routes/_resources+/generate-link-token';
 
@@ -24,6 +25,7 @@ export default function LaunchLink({
 }) {
 	const reGenerateLinkToken = useFetcher<typeof generateLinkTokenAction>();
 	const exchangeToken = useFetcher<typeof exchangeTokenAction>();
+	const updateBankConnection = useFetcher<typeof bankConnectionAction>();
 	const computedLink =
 		reGenerateLinkToken.data?.status === 'success'
 			? reGenerateLinkToken.data.data.link_token || link
@@ -31,15 +33,29 @@ export default function LaunchLink({
 
 	const onSuccess = useCallback<PlaidLinkOnSuccess>(
 		publicToken => {
-			exchangeToken.submit(
-				{
-					publicToken,
-					userId,
-				},
-				{ action: '/exchange-public-token', method: 'POST' },
-			);
+			/**
+			 * If the itemId is passed in, we are in "update mode" so no need to
+			 * exchange the public token.
+			 */
+			if (itemId) {
+				updateBankConnection.submit(
+					{ itemId },
+					{
+						action: '/bank-connection',
+						method: 'POST',
+					},
+				);
+			} else {
+				exchangeToken.submit(
+					{
+						publicToken,
+						userId,
+					},
+					{ action: '/exchange-public-token', method: 'POST' },
+				);
+			}
 		},
-		[exchangeToken, userId],
+		[exchangeToken, itemId, updateBankConnection, userId],
 	);
 
 	const onExit = useCallback<PlaidLinkOnExit>(
