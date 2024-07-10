@@ -1,12 +1,16 @@
+import { eq } from 'drizzle-orm';
 import {
 	Configuration,
 	CountryCode,
 	PlaidApi,
 	PlaidEnvironments,
 	type PlaidError,
+	type LinkTokenCreateRequest,
 	Products,
 } from 'plaid';
 import { getDomainUrl } from '~/app/utils/misc';
+import { db } from '~/db/index.server';
+import { bankConnections } from '~/db/schema';
 
 const plaidEnv = process.env.PLAID_ENV || 'sandbox';
 
@@ -39,22 +43,48 @@ export function isPliadError(error: any): error is PlaidError {
 /**
  * Generate a public link token for the authenticated user.
  * @param param0
- * @param param0.userId The user ID of the authenticated user.
+ * @param param0.itemId The login we want revalidate | update.
  * @param param0.accessTokens The access tokens issude by Plaid. Needed
  * in update mode only.
  */
 export async function generateLinkToken({
-	userId,
-	accessTokens,
+	itemId,
 	request,
+	selectNewAccount,
+	userId,
 }: {
-	userId: string;
-	accessTokens?: string[];
+	itemId?: string | null;
 	request: Request;
+	selectNewAccount?: boolean;
+	userId: string;
 }) {
 	const domain = getDomainUrl(request);
-	const linkTokenResponse = await plaidClient.linkTokenCreate({
-		access_tokens: accessTokens,
+	let accessToken: string[] | undefined;
+	let products: Products[] = [Products.Transactions];
+
+	/**
+	 * Update mode we need to send the access token an the products array has to
+	 * be empty.
+	 */
+	if (itemId) {
+		/**
+		 * TODO: move this to DB service.
+		 */
+		const bankConnection = await db.query.bankConnections.findFirst({
+			columns: { access_token: true },
+			where: eq(bankConnections.item_id, itemId),
+		});
+
+		if (!bankConnection) {
+			throw new Error('Item does not exist.');
+		}
+
+		accessToken = [bankConnection.access_token];
+		products = [];
+	}
+
+	const linkTokenConfig: LinkTokenCreateRequest = {
+		access_tokens: accessToken,
 		user: { client_user_id: userId },
 		/**
 		 * This is used to test the "returning user" flow. It means if the user
@@ -63,7 +93,7 @@ export async function generateLinkToken({
 		 * to test it in sandbox mode.
 		 */
 		// link_customization_name: 'REMEMBER_ME_SANDBOX',
-		products: [Products.Transactions],
+		products,
 		transactions: {
 			days_requested: 730,
 		},
@@ -77,7 +107,10 @@ export async function generateLinkToken({
 		webhook: domain.startsWith('https://')
 			? domain + '/plaid-webhook'
 			: undefined,
-		update: { account_selection_enabled: true },
-	});
+		update: selectNewAccount ? { account_selection_enabled: true } : undefined,
+	};
+
+	const linkTokenResponse = await plaidClient.linkTokenCreate(linkTokenConfig);
+
 	return linkTokenResponse.data;
 }
