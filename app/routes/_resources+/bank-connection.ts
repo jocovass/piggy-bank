@@ -1,7 +1,10 @@
 import { parseWithZod } from '@conform-to/zod';
-import { UTCDate } from '@date-fns/utc';
 import { type ActionFunctionArgs, json } from '@remix-run/node';
 import { and, eq } from 'drizzle-orm';
+import {
+	getConsentExpirationDate,
+	updatedBankConnection,
+} from '~/app/persistance/bank-connections';
 import { getItem, isPliadError } from '~/app/services/plaid.server';
 import { requireUser } from '~/app/utils/auth.server';
 import { createToastHeader } from '~/app/utils/toast.server';
@@ -59,17 +62,13 @@ export async function action({ request }: ActionFunctionArgs) {
 			accessToken: bankConnection.access_token,
 		});
 
-		const ninite = 90 * 24 * 60 * 60 * 1000;
-		const itemExpirationDate = new UTCDate(
-			response.item.consent_expiration_time || UTCDate.now() + ninite,
-		);
+		const { item_id, consent_expiration_time } = response.item;
 
-		await db
-			.update(bankConnections)
-			.set({
-				consent_expiration_time: itemExpirationDate,
-			})
-			.where(eq(bankConnections.item_id, response.item.item_id));
+		await updatedBankConnection(item_id, {
+			consent_expiration_time: getConsentExpirationDate(
+				consent_expiration_time,
+			),
+		});
 	} catch (err) {
 		if (isPliadError(err)) {
 			return json({ status: 'error' } as const, {

@@ -508,3 +508,11 @@ export type Password = z.infer<typeof selectPasswordSchema>;
  */
 export const selectSessionSchema = createSelectSchema(sessions);
 export type Session = z.infer<typeof selectSessionSchema>;
+
+/**
+ * Bank Connection types
+ */
+export const selectBankConnectionSchema = createSelectSchema(bankConnections);
+export type BankConnection = z.infer<typeof selectBankConnectionSchema>;
+export const insertBankConnectionSchema = createInsertSchema(bankConnections);
+export type InsertBankConnection = z.infer<typeof insertBankConnectionSchema>;
