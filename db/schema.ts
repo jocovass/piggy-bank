@@ -223,7 +223,7 @@ export const bankConnections = pgTable(
 		 * The bank id is a unique and stable identifier assigned by Plaid to
 		 * each financial institution they support.
 		 */
-		institution_id: text('institution_id').notNull(),
+		plaid_institution_id: text('institution_id').notNull(),
 		/**
 		 * Bank name.
 		 */
@@ -241,7 +241,7 @@ export const bankConnections = pgTable(
 		 * can be associated with multiple "accounts". To retrieve transaction data
 		 * from these accounts you can use the same "access_token".
 		 */
-		item_id: text('item_id').notNull(),
+		plaid_item_id: text('item_id').notNull(),
 		/**
 		 * Access token issued by plaid after a successful login. This token can be
 		 * used to retrieve transaction data from the financial institution.
@@ -433,7 +433,7 @@ export const transactions = pgTable(
 		/**
 		 * Unique id for the transaction.
 		 */
-		transaction_id: text('transaction_id').notNull(),
+		plaid_transaction_id: text('plaid_transaction_id').notNull(),
 		/**
 		 * The URL of a logo associated with this transaction.
 		 */
@@ -508,3 +508,27 @@ export type Password = z.infer<typeof selectPasswordSchema>;
  */
 export const selectSessionSchema = createSelectSchema(sessions);
 export type Session = z.infer<typeof selectSessionSchema>;
+
+/**
+ * Bank Connection types
+ */
+export const selectBankConnectionSchema = createSelectSchema(bankConnections);
+export type BankConnection = z.infer<typeof selectBankConnectionSchema>;
+export const insertBankConnectionSchema = createInsertSchema(bankConnections);
+export type InsertBankConnection = z.infer<typeof insertBankConnectionSchema>;
+
+/**
+ * Accounts types
+ */
+export const selectAccountSchema = createSelectSchema(accounts);
+export type Account = z.infer<typeof selectAccountSchema>;
+export const insertAccountSchema = createInsertSchema(accounts);
+export type InsertAccount = z.infer<typeof insertAccountSchema>;
+
+/**
+ * Transactions types
+ */
+export const selectTransactionSchema = createSelectSchema(transactions);
+export type Transaction = z.infer<typeof selectTransactionSchema>;
+export const insertTransactionSchema = createInsertSchema(transactions);
+export type InsertTransaction = z.infer<typeof insertTransactionSchema>;

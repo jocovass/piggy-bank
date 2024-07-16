@@ -6,8 +6,11 @@ import {
 	PlaidEnvironments,
 	type PlaidError,
 	type LinkTokenCreateRequest,
+	type Transaction,
+	type RemovedTransaction,
 	Products,
 } from 'plaid';
+import { getBankConnectionByItemId } from '~/app/persistance/bank-connections';
 import { getDomainUrl } from '~/app/utils/misc';
 import { db } from '~/db/index.server';
 import { bankConnections } from '~/db/schema';
@@ -72,7 +75,7 @@ export async function generateLinkToken({
 		 */
 		const bankConnection = await db.query.bankConnections.findFirst({
 			columns: { access_token: true },
-			where: eq(bankConnections.item_id, itemId),
+			where: eq(bankConnections.plaid_item_id, itemId),
 		});
 
 		if (!bankConnection) {
@@ -123,4 +126,94 @@ export async function getItem({ accessToken }: { accessToken: string }) {
 	});
 
 	return response.data;
+}
+
+export async function getInstitutionById({
+	institutionId,
+}: {
+	institutionId: string;
+}) {
+	const response = await plaidClient.institutionsGetById({
+		country_codes: [CountryCode.Gb],
+		institution_id: institutionId,
+		client_id: process.env.PLAID_CLIENT_ID,
+		secret: process.env.PLAID_SECRET,
+		options: {
+			include_optional_metadata: true,
+		},
+	});
+
+	return response.data;
+}
+
+export async function getAccounts({ accessToken }: { accessToken: string }) {
+	const response = await plaidClient.accountsGet({
+		access_token: accessToken,
+		client_id: process.env.PLAID_CLIENT_ID,
+		secret: process.env.PLAID_SECRET,
+	});
+
+	return response.data;
+}
+
+export async function exchangePublicToken(publicToken: string) {
+	const response = await plaidClient.itemPublicTokenExchange({
+		public_token: publicToken,
+	});
+
+	return response.data;
+}
+
+export async function syncTransactions({
+	accessToken,
+	cursor,
+	count = 100,
+}: {
+	accessToken: string;
+	cursor?: string;
+	count?: number;
+}) {
+	const response = await plaidClient.transactionsSync({
+		access_token: accessToken,
+		count,
+		cursor,
+	});
+
+	return response.data;
+}
+
+export async function fetchTransactions(itemId: string) {
+	const { access_token, transaction_cursor } =
+		await getBankConnectionByItemId(itemId);
+
+	let cursor = transaction_cursor;
+	/**
+	 * New transaction updates since "cursor"
+	 */
+	let added: Transaction[] = [];
+	let modified: Transaction[] = [];
+	/**
+	 * Removed transaction ids
+	 */
+	let removed: RemovedTransaction[] = [];
+	let hasMore = true;
+
+	try {
+		while (hasMore) {
+			const transactionResponse = await syncTransactions({
+				accessToken: access_token,
+				cursor: cursor || undefined,
+			});
+			added = added.concat(transactionResponse.added);
+			modified = modified.concat(transactionResponse.modified);
+			removed = removed.concat(transactionResponse.removed);
+			hasMore = transactionResponse.has_more;
+			cursor = transactionResponse.next_cursor;
+		}
+	} catch (error) {
+		console.error(`Error while fetching transactions: ${error}`);
+		cursor = transaction_cursor;
+	}
+
+	return { accessToken: access_token, added, cursor, modified, removed };
 }
