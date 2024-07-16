@@ -6,6 +6,8 @@ import {
 	PlaidEnvironments,
 	type PlaidError,
 	type LinkTokenCreateRequest,
+	type Transaction,
+	type RemovedTransaction,
 	Products,
 } from 'plaid';
 import { getBankConnectionByItemId } from '~/app/persistance/bank-connections';
@@ -73,7 +75,7 @@ export async function generateLinkToken({
 		 */
 		const bankConnection = await db.query.bankConnections.findFirst({
 			columns: { access_token: true },
-			where: eq(bankConnections.item_id, itemId),
+			where: eq(bankConnections.plaid_item_id, itemId),
 		});
 
 		if (!bankConnection) {
@@ -188,15 +190,30 @@ export async function fetchTransactions(itemId: string) {
 	/**
 	 * New transaction updates since "cursor"
 	 */
-	let added = [];
-	let modified = [];
+	let added: Transaction[] = [];
+	let modified: Transaction[] = [];
 	/**
 	 * Removed transaction ids
 	 */
-	let removed = [];
+	let removed: RemovedTransaction[] = [];
 	let hasMore = true;
-	const batchSize = 100;
+
 	try {
-		while (hasMore) {}
-	} catch (error) {}
+		while (hasMore) {
+			const transactionResponse = await syncTransactions({
+				accessToken: access_token,
+				cursor: cursor || undefined,
+			});
+			added = added.concat(transactionResponse.added);
+			modified = modified.concat(transactionResponse.modified);
+			removed = removed.concat(transactionResponse.removed);
+			hasMore = transactionResponse.has_more;
+			cursor = transactionResponse.next_cursor;
+		}
+	} catch (error) {
+		console.error(`Error while fetching transactions: ${error}`);
+		cursor = transaction_cursor;
+	}
+
+	return { accessToken: access_token, added, cursor, modified, removed };
 }

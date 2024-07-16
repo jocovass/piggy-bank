@@ -41,7 +41,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		columns: { access_token: true },
 		where: and(
 			eq(bankConnections.user_id, user.id),
-			eq(bankConnections.item_id, itemId),
+			eq(bankConnections.plaid_item_id, itemId),
 			eq(bankConnections.is_active, true),
 		),
 	});
