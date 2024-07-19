@@ -223,7 +223,7 @@ export const bankConnections = pgTable(
 		 * The bank id is a unique and stable identifier assigned by Plaid to
 		 * each financial institution they support.
 		 */
-		plaid_institution_id: text('institution_id').notNull(),
+		plaid_institution_id: text('plaid_institution_id').notNull(),
 		/**
 		 * Bank name.
 		 */
@@ -324,7 +324,7 @@ export const accounts = pgTable(
 		/**
 		 * Plaid unique identifier for the account.
 		 */
-		plaid_account_id: text('account_id').notNull(),
+		plaid_account_id: text('plaid_account_id').notNull().unique(),
 		/**
 		 * The name of the account.
 		 */
@@ -433,7 +433,7 @@ export const transactions = pgTable(
 		/**
 		 * Unique id for the transaction.
 		 */
-		plaid_transaction_id: text('plaid_transaction_id').notNull(),
+		plaid_transaction_id: text('plaid_transaction_id').notNull().unique(),
 		/**
 		 * The URL of a logo associated with this transaction.
 		 */
