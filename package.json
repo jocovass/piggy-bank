@@ -12,7 +12,7 @@
     "db:check": "drizzle-kit check",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx ./db/migrate.ts",
-    "db:push": "drizzle-kit push:pg",
+    "db:push": "drizzle-kit push",
     "db:seed": "tsx ./db.seed.ts",
     "test": "vitest",
     "coverage": "vitest run --coverage",

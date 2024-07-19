@@ -1,10 +1,8 @@
 {
-  "id": "ae61b0dd-ab95-42c1-9e96-90379692a909",
-  "prevId": "00000000-0000-0000-0000-000000000000",
-  "version": "5",
-  "dialect": "pg",
+  "version": "7",
+  "dialect": "postgresql",
   "tables": {
-    "connections": {
+    "public.connections": {
       "name": "connections",
       "schema": "",
       "columns": {
@@ -52,30 +50,30 @@
         "connections_userId_users_id_fk": {
           "name": "connections_userId_users_id_fk",
           "tableFrom": "connections",
-          "tableTo": "users",
           "columnsFrom": [
             "userId"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "cascade"
+          "onUpdate": "cascade",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "unique_providerName_providerId": {
           "name": "unique_providerName_providerId",
-          "nullsNotDistinct": false,
           "columns": [
             "providerId",
             "providerName"
-          ]
+          ],
+          "nullsNotDistinct": false
         }
       }
     },
-    "passwords": {
+    "public.passwords": {
       "name": "passwords",
       "schema": "",
       "columns": {
@@ -108,32 +106,40 @@
       },
       "indexes": {
         "index_passwords_userId": {
-          "name": "index_passwords_userId",
           "columns": [
-            "userId"
+            {
+              "expression": "userId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "index_passwords_userId",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "passwords_userId_users_id_fk": {
           "name": "passwords_userId_users_id_fk",
           "tableFrom": "passwords",
-          "tableTo": "users",
           "columnsFrom": [
             "userId"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "cascade"
+          "onUpdate": "cascade",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "sessions": {
+    "public.sessions": {
       "name": "sessions",
       "schema": "",
       "columns": {
@@ -172,32 +178,40 @@
       },
       "indexes": {
         "index_sessions_userId": {
-          "name": "index_sessions_userId",
           "columns": [
-            "userId"
+            {
+              "expression": "userId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "index_sessions_userId",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "sessions_userId_users_id_fk": {
           "name": "sessions_userId_users_id_fk",
           "tableFrom": "sessions",
-          "tableTo": "users",
           "columnsFrom": [
             "userId"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
-          "onUpdate": "cascade"
+          "onUpdate": "cascade",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "users": {
+    "public.users": {
       "name": "users",
       "schema": "",
       "columns": {
@@ -246,10 +260,10 @@
       "uniqueConstraints": {
         "users_email_unique": {
           "name": "users_email_unique",
-          "nullsNotDistinct": false,
           "columns": [
             "email"
-          ]
+          ],
+          "nullsNotDistinct": false
         }
       }
     }
@@ -257,8 +271,10 @@
   "enums": {},
   "schemas": {},
   "_meta": {
-    "columns": {},
     "schemas": {},
-    "tables": {}
-  }
+    "tables": {},
+    "columns": {}
+  },
+  "id": "ae61b0dd-ab95-42c1-9e96-90379692a909",
+  "prevId": "00000000-0000-0000-0000-000000000000"
 }
