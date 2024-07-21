@@ -9,3 +9,5 @@ export const db = remember('drizzle', () => {
 	const pool = new Pool({ connectionString: process.env.DB_URL });
 	return drizzle(pool, { schema });
 });
+
+export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];

@@ -182,11 +182,48 @@ export async function syncTransactions({
 	return response.data;
 }
 
-export async function fetchTransactions(itemId: string) {
-	const { access_token, transaction_cursor } =
-		await getBankConnectionByItemId(itemId);
+export type FetchTransactionsResponse = Promise<{
+	accessToken: string;
+	added: Transaction[];
+	cursor: string | null;
+	modified: Transaction[];
+	removed: RemovedTransaction[];
+}>;
 
-	let cursor = transaction_cursor;
+export async function fetchTransactions({
+	itemId,
+}: {
+	itemId: string;
+}): FetchTransactionsResponse;
+export async function fetchTransactions({
+	accessToken,
+	cursor,
+}: {
+	accessToken: string;
+	cursor?: string;
+}): FetchTransactionsResponse;
+export async function fetchTransactions({
+	itemId,
+	accessToken,
+	cursor,
+}: {
+	itemId?: string;
+	accessToken?: string;
+	cursor?: string;
+}) {
+	let access_token!: string;
+	let transaction_cursor!: string | null | undefined;
+
+	if (itemId) {
+		const bankConnection = await getBankConnectionByItemId(itemId);
+		access_token = bankConnection.access_token;
+		transaction_cursor = bankConnection.transaction_cursor;
+	} else if (accessToken) {
+		access_token = accessToken;
+		transaction_cursor = cursor;
+	}
+
+	let _cursor = transaction_cursor;
 	/**
 	 * New transaction updates since "cursor"
 	 */
@@ -202,18 +239,24 @@ export async function fetchTransactions(itemId: string) {
 		while (hasMore) {
 			const transactionResponse = await syncTransactions({
 				accessToken: access_token,
-				cursor: cursor || undefined,
+				cursor: _cursor || undefined,
 			});
 			added = added.concat(transactionResponse.added);
 			modified = modified.concat(transactionResponse.modified);
 			removed = removed.concat(transactionResponse.removed);
 			hasMore = transactionResponse.has_more;
-			cursor = transactionResponse.next_cursor;
+			_cursor = transactionResponse.next_cursor;
 		}
 	} catch (error) {
 		console.error(`Error while fetching transactions: ${error}`);
-		cursor = transaction_cursor;
+		_cursor = transaction_cursor;
 	}
 
-	return { accessToken: access_token, added, cursor, modified, removed };
+	return {
+		accessToken: access_token,
+		added,
+		cursor: _cursor,
+		modified,
+		removed,
+	};
 }

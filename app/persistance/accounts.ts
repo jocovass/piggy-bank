@@ -1,9 +1,13 @@
 import { conflictUpdateSetAllColumns } from '~/app/utils/db';
-import { db } from '~/db/index.server';
+import { db, type Transaction } from '~/db/index.server';
 import { accounts, type InsertAccount } from '~/db/schema';
 
-export async function createAccounts(plaidAccounts: InsertAccount[]) {
-	const newAccounts = await db
+export async function createAccounts(
+	plaidAccounts: InsertAccount[],
+	tx?: Transaction,
+) {
+	const _db = tx ?? db;
+	const newAccounts = await _db
 		.insert(accounts)
 		.values(plaidAccounts)
 		.onConflictDoUpdate({
