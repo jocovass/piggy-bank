@@ -187,23 +187,23 @@ jobs:
             secrets.NEON_MAIN_HOST, secrets.NEON_DATABASE) }}
         run: npm run db:migrate
 
-  deploy:
-    name: 🚀 Deploy
-    runs-on: ubuntu-22.04
-    needs: [lint, typecheck, test-db, vitest, playwright, migrate]
-    # Only build/deploy branches on push
-    if: ${{ github.event_name == 'push' }}
-    steps:
-      - name: ⬇️ Checkout repo
-        uses: actions/checkout@v4
+  # deploy:
+  #   name: 🚀 Deploy
+  #   runs-on: ubuntu-22.04
+  #   needs: [lint, typecheck, test-db, vitest, playwright, migrate]
+  #   # Only build/deploy branches on push
+  #   if: ${{ github.event_name == 'push' }}
+  #   steps:
+  #     - name: ⬇️ Checkout repo
+  #       uses: actions/checkout@v4
 
-      - name: 🎈 Setup Fly
-        uses: superfly/flyctl-actions/setup-flyctl@1.5
+  #     - name: 🎈 Setup Fly
+  #       uses: superfly/flyctl-actions/setup-flyctl@1.5
 
-      - name: 🚀 Deploy Production
-        run: flyctl deploy --remote-only
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+  #     - name: 🚀 Deploy Production
+  #       run: flyctl deploy --remote-only
+  #       env:
+  #         FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
   cleanup:
     name: 🧹 Clean up test branch
