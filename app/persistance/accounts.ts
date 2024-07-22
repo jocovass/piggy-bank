@@ -18,3 +18,12 @@ export async function createAccounts(
 
 	return newAccounts;
 }
+
+export async function getAccounts(userId: string, tx?: Transaction) {
+	const _db = tx ?? db;
+	const data = await _db.query.accounts.findMany({
+		where: (account, { eq }) => eq(account.user_id, userId),
+	});
+
+	return data;
+}
