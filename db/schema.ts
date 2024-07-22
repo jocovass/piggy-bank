@@ -379,6 +379,7 @@ export const accountRelations = relations(accounts, ({ one, many }) => ({
 	bankConnection: one(bankConnections, {
 		fields: [accounts.bank_connection_id],
 		references: [bankConnections.id],
+		relationName: 'bank_connection_accounts',
 	}),
 	user: one(users, {
 		fields: [accounts.user_id],

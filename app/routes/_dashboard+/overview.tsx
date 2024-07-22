@@ -6,6 +6,7 @@ import {
 import { useLoaderData } from '@remix-run/react';
 import { getAccounts } from '~/app/persistance/accounts';
 import { getBankConnections } from '~/app/persistance/bank-connections';
+import { getTransactions } from '~/app/persistance/transactions';
 import { AddBankAccount } from '~/app/routes/_resources+/generate-link-token';
 import { requireUser } from '~/app/utils/auth.server';
 
@@ -20,12 +21,18 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const user = await requireUser(request);
 	const bankConnections = await getBankConnections(user.id);
 	const accounts = await getAccounts(user.id);
-	return json({ accounts, bankConnections });
+	const transactions = await getTransactions({
+		accountIds: accounts.map(account => account.id),
+		userId: user.id,
+	});
+
+	return json({ accounts, bankConnections, transactions });
 }
 
 export default function Dashboard() {
 	const data = useLoaderData<typeof loader>();
 	console.log(data);
+
 	return (
 		<div>
 			<p>
