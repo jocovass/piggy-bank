@@ -21,7 +21,7 @@ export const rememberMeKey = 'remember';
 
 export async function handleNewSession(
 	{
-		redirectTo = '/',
+		redirectTo = '/overview',
 		remember = false,
 		request,
 		session,
@@ -73,7 +73,7 @@ export async function handleNewSession(
 		authSession.set(sessionKey, session.id);
 
 		throw redirect(
-			'/',
+			'/overview',
 			combineResponseInit(
 				{
 					headers: {

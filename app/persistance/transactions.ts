@@ -38,3 +38,32 @@ export async function deleteTransactions(
 		.delete(transactions)
 		.where(inArray(transactions.plaid_transaction_id, deletableTransactions));
 }
+
+export async function getTransactions({
+	accountIds,
+	userId,
+	offset = 0,
+	limit = 30,
+	tx,
+}: {
+	accountIds: string[];
+	userId: string;
+	limit?: number;
+	offset?: number;
+	tx?: Transaction;
+}) {
+	if (accountIds.length === 0) {
+		return [];
+	}
+
+	const _db = tx ?? db;
+	return _db.query.transactions.findMany({
+		where: (transaction, { inArray, eq, and }) =>
+			and(
+				eq(transaction.user_id, userId),
+				inArray(transaction.account_id, accountIds),
+			),
+		limit,
+		offset,
+	});
+}

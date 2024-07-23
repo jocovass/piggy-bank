@@ -154,5 +154,5 @@ export async function action({ request }: ActionFunctionArgs) {
 		);
 	});
 
-	return redirect('/');
+	return redirect('/overview');
 }

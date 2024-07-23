@@ -177,7 +177,7 @@ export async function requireAnonymus(request: Request) {
 		: null;
 
 	if (sessionWithUser && sessionWithUser.user) {
-		throw redirect('/');
+		throw redirect('/overview');
 	}
 
 	/**

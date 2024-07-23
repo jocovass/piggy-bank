@@ -54,7 +54,12 @@ export async function action({ request }: ActionFunctionArgs) {
 
 	const { session, remember } = submission.value;
 
-	return handleNewSession({ remember, request, session });
+	return handleNewSession({
+		redirectTo: '/overview',
+		remember,
+		request,
+		session,
+	});
 }
 
 export default function LoginRoute() {

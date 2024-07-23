@@ -47,3 +47,12 @@ export async function getBankConnectionByItemId(itemId: string) {
 
 	return bankConnection;
 }
+
+export async function getBankConnections(userId: string, tx?: Transaction) {
+	const _db = tx ?? db;
+	const data = await _db.query.bankConnections.findMany({
+		where: (bankConnection, { eq }) => eq(bankConnection.user_id, userId),
+	});
+
+	return data;
+}

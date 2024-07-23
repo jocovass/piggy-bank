@@ -340,8 +340,8 @@ export const accounts = pgTable(
 		/**
 		 * The total amount of funds in or owed by the account.
 		 *
-		 * For credi type accounts, a positive balance idicates the amount owed, a
-		 * negative amount indicates the lneder owing the accound holder.
+		 * For credit type accounts, a positive balance idicates the amount owed, a
+		 * negative amount indicates the lender owing the accound holder.
 		 */
 		current_balance: decimal('current_balance', { precision: 20, scale: 2 }),
 		/**
@@ -379,6 +379,7 @@ export const accountRelations = relations(accounts, ({ one, many }) => ({
 	bankConnection: one(bankConnections, {
 		fields: [accounts.bank_connection_id],
 		references: [bankConnections.id],
+		relationName: 'bank_connection_accounts',
 	}),
 	user: one(users, {
 		fields: [accounts.user_id],
