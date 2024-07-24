@@ -1,5 +1,44 @@
+import { useFormAction, useNavigation } from '@remix-run/react';
 import { type ClassValue, clsx } from 'clsx';
+import { useSpinDelay } from 'spin-delay';
 import { twMerge } from 'tailwind-merge';
+
+export function useIsPending({
+	formAction,
+	formMethod = 'GET',
+	state = 'non-idle',
+}: {
+	formAction?: string;
+	formMethod?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+	state?: 'submitting' | 'non-idle' | 'loading';
+} = {}) {
+	const contextualFormAction = useFormAction();
+	const navigation = useNavigation();
+	console.log(contextualFormAction, navigation);
+	const isPending =
+		state === 'non-idle'
+			? navigation.state !== 'idle'
+			: navigation.state === state;
+	return (
+		isPending &&
+		(navigation.formAction === formAction ?? contextualFormAction) &&
+		navigation.formMethod === formMethod
+	);
+}
+
+export function useDelayedIsPending({
+	formAction,
+	formMethod,
+	delay = 400,
+	minDuration = 300,
+}: Parameters<typeof useIsPending>[0] &
+	Parameters<typeof useSpinDelay>[1] = {}) {
+	const isPending = useIsPending({
+		formAction,
+		formMethod,
+	});
+	return useSpinDelay(isPending, { delay, minDuration });
+}
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));

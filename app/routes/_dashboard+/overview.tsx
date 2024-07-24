@@ -35,7 +35,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function Dashboard() {
 	const data = useLoaderData<typeof loader>();
-	console.log(data);
 	const totalBalance = useMemo(() => {
 		const total = data.accounts.reduce((acc, account) => {
 			return (
