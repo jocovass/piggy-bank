@@ -1,15 +1,16 @@
-import { UTCDate } from '@date-fns/utc';
 import {
 	type MetaFunction,
 	type LoaderFunctionArgs,
 	json,
 } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
+import { formatInTimeZone } from 'date-fns-tz';
 import { useMemo } from 'react';
 import { getAccountsWithBank } from '~/app/persistance/accounts';
 import { getTransactions } from '~/app/persistance/transactions';
 import { AddBankAccount } from '~/app/routes/_resources+/generate-link-token';
 import { requireUser } from '~/app/utils/auth.server';
+import { useHints } from '~/app/utils/client-hints';
 import { formatCurrency } from '~/app/utils/format-currency';
 
 export const meta: MetaFunction = () => {
@@ -34,6 +35,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function Dashboard() {
+	const hints = useHints();
 	const data = useLoaderData<typeof loader>();
 	const totalBalance = useMemo(() => {
 		const total = data.accounts.reduce((acc, account) => {
@@ -75,7 +77,13 @@ export default function Dashboard() {
 				>
 					<p>{transaction.name}</p>
 					<p>{formatCurrency(+transaction.amount)}</p>
-					<p>{new UTCDate(transaction.created_at).toLocaleString()}</p>
+					<p>
+						{formatInTimeZone(
+							transaction.created_at,
+							hints.timeZone,
+							'dd.MM.yyyy',
+						)}
+					</p>
 				</div>
 			))}
 		</div>
