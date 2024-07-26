@@ -21,7 +21,7 @@ export function useIsPending({
 			: navigation.state === state;
 	return (
 		isPending &&
-		(navigation.formAction === formAction ?? contextualFormAction) &&
+		navigation.formAction === (formAction ?? contextualFormAction) &&
 		navigation.formMethod === formMethod
 	);
 }
