@@ -358,6 +358,7 @@ export const accounts = pgTable(
 		unofficial_currency_code: text('unofficial_currency_code'),
 		type: text('type').notNull(),
 		subtype: text('subtype'),
+		is_active: boolean('is_active').notNull().default(true),
 		created_at: timestamp('created_at', { withTimezone: true })
 			.notNull()
 			.defaultNow(),

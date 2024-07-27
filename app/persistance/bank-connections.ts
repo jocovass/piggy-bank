@@ -21,7 +21,7 @@ export async function createBankConnection(
 }
 
 export async function updatedBankConnection(
-	itemId: string,
+	bankConnectionId: string,
 	{ id, ...data }: Partial<InsertBankConnection>,
 	tx?: Transaction,
 ) {
@@ -29,7 +29,7 @@ export async function updatedBankConnection(
 	const item = await _db
 		.update(bankConnections)
 		.set(data)
-		.where(eq(bankConnections.plaid_item_id, itemId))
+		.where(eq(bankConnections.id, bankConnectionId))
 		.returning();
 
 	return item[0];
