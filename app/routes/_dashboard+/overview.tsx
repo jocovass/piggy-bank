@@ -3,9 +3,17 @@ import {
 	type LoaderFunctionArgs,
 	json,
 } from '@remix-run/node';
-import { useLoaderData } from '@remix-run/react';
+import { useFetcher, useLoaderData } from '@remix-run/react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { useMemo } from 'react';
+import { ElipsisVertical } from '~/app/components/icons/elipsis-vertical';
+import { Button } from '~/app/components/ui/button';
+import {
+	Popover,
+	PopoverClose,
+	PopoverContent,
+	PopoverTrigger,
+} from '~/app/components/ui/popover';
 import { getAccountsWithBank } from '~/app/persistance/accounts';
 import { getTransactions } from '~/app/persistance/transactions';
 import { AddBankAccount } from '~/app/routes/_resources+/generate-link-token';
@@ -24,7 +32,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const user = await requireUser(request);
 	const accounts = await getAccountsWithBank(user.id);
 	const transactions = await getTransactions({
-		accountIds: accounts.map(account => account.id),
 		userId: user.id,
 	});
 
@@ -37,6 +44,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export default function Dashboard() {
 	const hints = useHints();
 	const data = useLoaderData<typeof loader>();
+	const removeBankConnection = useFetcher();
+
 	const totalBalance = useMemo(() => {
 		const total = data.accounts.reduce((acc, account) => {
 			return (
@@ -55,7 +64,32 @@ export default function Dashboard() {
 			</div>
 
 			{data.accounts.map(account => (
-				<div key={account.id} className="mb-4">
+				<div key={account.id} className="relative mb-4 inline-block">
+					<Popover>
+						<PopoverTrigger className="absolute right-0 top-0">
+							<ElipsisVertical />
+						</PopoverTrigger>
+						<PopoverContent className="flex w-32 flex-col p-2" align="start">
+							<PopoverClose asChild>
+								<Button
+									className="justify-start"
+									variant="ghost"
+									size="sm"
+									onClick={() =>
+										removeBankConnection.submit(
+											{ id: account.bank_connection_id },
+											{
+												method: 'POST',
+												action: '/remove-bank-connection',
+											},
+										)
+									}
+								>
+									Delete
+								</Button>
+							</PopoverClose>
+						</PopoverContent>
+					</Popover>
 					<img
 						className={`h-14 w-14 rounded-full`}
 						src={`data:image/png;base64, ${account.bankConnection.logo}`}

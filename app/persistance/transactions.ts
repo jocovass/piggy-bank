@@ -40,30 +40,35 @@ export async function deleteTransactions(
 }
 
 export async function getTransactions({
-	accountIds,
 	userId,
 	offset = 0,
 	limit = 30,
 	tx,
 }: {
-	accountIds: string[];
 	userId: string;
 	limit?: number;
 	offset?: number;
 	tx?: Transaction;
 }) {
-	if (accountIds.length === 0) {
-		return [];
-	}
-
 	const _db = tx ?? db;
 	return _db.query.transactions.findMany({
-		where: (transaction, { inArray, eq, and }) =>
-			and(
-				eq(transaction.user_id, userId),
-				inArray(transaction.account_id, accountIds),
-			),
+		where: (transaction, { eq }) => eq(transaction.user_id, userId),
 		limit,
 		offset,
 	});
+}
+
+export async function updateTransaction(
+	accountId: string[],
+	{ id, ...data }: Partial<InsertTransaction>,
+	tx?: Transaction,
+) {
+	const _db = tx ?? db;
+	const result = await _db
+		.update(transactions)
+		.set(data)
+		.where(inArray(transactions.account_id, accountId))
+		.returning();
+
+	return result;
 }

@@ -121,11 +121,15 @@ export async function generateLinkToken({
 export async function getItem({ accessToken }: { accessToken: string }) {
 	const response = await plaidClient.itemGet({
 		access_token: accessToken,
-		client_id: process.env.PLAID_CLIENT_ID,
-		secret: process.env.PLAID_SECRET,
 	});
-
 	return response.data;
+}
+
+export async function removeItem({ accessToken }: { accessToken: string }) {
+	await plaidClient.itemRemove({
+		access_token: accessToken,
+	});
+	return;
 }
 
 export async function getInstitutionById({
@@ -136,8 +140,6 @@ export async function getInstitutionById({
 	const response = await plaidClient.institutionsGetById({
 		country_codes: [CountryCode.Gb],
 		institution_id: institutionId,
-		client_id: process.env.PLAID_CLIENT_ID,
-		secret: process.env.PLAID_SECRET,
 		options: {
 			include_optional_metadata: true,
 		},
@@ -149,10 +151,7 @@ export async function getInstitutionById({
 export async function getAccounts({ accessToken }: { accessToken: string }) {
 	const response = await plaidClient.accountsGet({
 		access_token: accessToken,
-		client_id: process.env.PLAID_CLIENT_ID,
-		secret: process.env.PLAID_SECRET,
 	});
-
 	return response.data;
 }
 
@@ -160,7 +159,6 @@ export async function exchangePublicToken(publicToken: string) {
 	const response = await plaidClient.itemPublicTokenExchange({
 		public_token: publicToken,
 	});
-
 	return response.data;
 }
 
