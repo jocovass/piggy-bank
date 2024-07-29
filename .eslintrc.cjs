@@ -10,6 +10,7 @@ module.exports = {
 		'prettier',
 	],
 	plugins: ['no-relative-import-paths'],
+	ignorePatterns: ['app/routes/api/index.ts'],
 	rules: {
 		// playwright requires destructuring in fixtures even if you don't use anything 🤷‍♂️
 		'no-empty-pattern': 'off',
