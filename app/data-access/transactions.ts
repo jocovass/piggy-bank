@@ -1,6 +1,6 @@
-import { inArray } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { conflictUpdateSetAllColumns } from '~/app/utils/db';
-import { db, type Transaction } from '~/db/index.server';
+import { type DB, db, type Transaction } from '~/db/index.server';
 import { transactions, type InsertTransaction } from '~/db/schema';
 
 export async function createOrUpdateTransactions(
@@ -58,16 +58,19 @@ export async function getTransactions({
 	});
 }
 
-export async function updateTransaction(
-	accountId: string[],
-	{ id, ...data }: Partial<InsertTransaction>,
-	tx?: Transaction,
-) {
-	const _db = tx ?? db;
-	const result = await _db
+export async function updateAccountTransactions({
+	accountId,
+	data,
+	tx = db,
+}: {
+	accountId: string;
+	data: Partial<Omit<InsertTransaction, 'id'>>;
+	tx?: DB;
+}) {
+	const result = await tx
 		.update(transactions)
 		.set(data)
-		.where(inArray(transactions.account_id, accountId))
+		.where(eq(transactions.account_id, accountId))
 		.returning();
 
 	return result;

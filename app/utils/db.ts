@@ -5,6 +5,10 @@ import {
 	getTableConfig,
 } from 'drizzle-orm/pg-core';
 
+export type ColumnsSelection<TTable extends PgTable> = {
+	[K in keyof TTable['_']['columns']]?: true;
+};
+
 export function conflictUpdateSetAllColumns<TTable extends PgTable>(
 	table: TTable,
 	columnsToUpdate?: (keyof TTable['_']['columns'])[],

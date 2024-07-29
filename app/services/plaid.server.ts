@@ -10,7 +10,7 @@ import {
 	type RemovedTransaction,
 	Products,
 } from 'plaid';
-import { getBankConnectionByItemId } from '~/app/persistance/bank-connections';
+import { getBankConnectionByItemId } from '~/app/data-access/bank-connections';
 import { getDomainUrl } from '~/app/utils/misc';
 import { db } from '~/db/index.server';
 import { bankConnections } from '~/db/schema';
@@ -213,7 +213,10 @@ export async function fetchTransactions({
 	let transaction_cursor!: string | null | undefined;
 
 	if (itemId) {
-		const bankConnection = await getBankConnectionByItemId(itemId);
+		const bankConnection = await getBankConnectionByItemId({
+			columns: { access_token: true, transaction_cursor: true },
+			itemId,
+		});
 		access_token = bankConnection.access_token;
 		transaction_cursor = bankConnection.transaction_cursor;
 	} else if (accessToken) {

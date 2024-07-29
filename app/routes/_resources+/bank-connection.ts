@@ -1,19 +1,17 @@
 import { parseWithZod } from '@conform-to/zod';
 import { type ActionFunctionArgs, json } from '@remix-run/node';
-import { and, eq } from 'drizzle-orm';
 import {
+	getBankConnectionByItemId,
 	getConsentExpirationDate,
-	updatedBankConnection,
-} from '~/app/persistance/bank-connections';
+	updateBankConnection,
+} from '~/app/data-access/bank-connections';
 import { getItem, isPliadError } from '~/app/services/plaid.server';
 import { requireUser } from '~/app/utils/auth.server';
 import { createToastHeader } from '~/app/utils/toast.server';
 import { ItemSchema } from '~/app/utils/validation-schemas';
-import { db } from '~/db/index.server';
-import { bankConnections } from '~/db/schema';
 
 export async function action({ request }: ActionFunctionArgs) {
-	const user = await requireUser(request);
+	await requireUser(request);
 	const form = await request.formData();
 	const submission = await parseWithZod(form, {
 		schema: ItemSchema.required(),
@@ -37,13 +35,10 @@ export async function action({ request }: ActionFunctionArgs) {
 	}
 
 	const { itemId } = submission.value;
-	const bankConnection = await db.query.bankConnections.findFirst({
-		columns: { access_token: true },
-		where: and(
-			eq(bankConnections.user_id, user.id),
-			eq(bankConnections.plaid_item_id, itemId),
-			eq(bankConnections.is_active, true),
-		),
+
+	const bankConnection = await getBankConnectionByItemId({
+		itemId,
+		columns: { access_token: true, id: true },
 	});
 
 	if (!bankConnection) {
@@ -62,12 +57,15 @@ export async function action({ request }: ActionFunctionArgs) {
 			accessToken: bankConnection.access_token,
 		});
 
-		const { item_id, consent_expiration_time } = response.item;
+		const { consent_expiration_time } = response.item;
 
-		await updatedBankConnection(item_id, {
-			consent_expiration_time: getConsentExpirationDate(
-				consent_expiration_time,
-			),
+		await updateBankConnection({
+			bankConnectionId: bankConnection.id,
+			data: {
+				consent_expiration_time: getConsentExpirationDate(
+					consent_expiration_time,
+				),
+			},
 		});
 	} catch (err) {
 		if (isPliadError(err)) {
