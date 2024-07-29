@@ -14,8 +14,8 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from '~/app/components/ui/popover';
-import { getAccountsWithBank } from '~/app/persistance/accounts';
-import { getTransactions } from '~/app/persistance/transactions';
+import { getAccountsWithBank } from '~/app/data-access/accounts';
+import { getTransactions } from '~/app/data-access/transactions';
 import { AddBankAccount } from '~/app/routes/_resources+/generate-link-token';
 import { requireUser } from '~/app/utils/auth.server';
 import { useHints } from '~/app/utils/client-hints';
@@ -77,7 +77,10 @@ export default function Dashboard() {
 									size="sm"
 									onClick={() =>
 										removeBankConnection.submit(
-											{ id: account.bank_connection_id },
+											{
+												accountId: account.id,
+												bankConnectionId: account.bank_connection_id,
+											},
 											{
 												method: 'POST',
 												action: '/remove-bank-connection',

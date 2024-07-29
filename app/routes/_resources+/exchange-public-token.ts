@@ -2,16 +2,16 @@ import { parseWithZod } from '@conform-to/zod';
 import { type ActionFunctionArgs, redirect, json } from '@remix-run/node';
 import invariant from 'tiny-invariant';
 import { z } from 'zod';
-import { createAccounts } from '~/app/persistance/accounts';
+import { createAccounts } from '~/app/data-access/accounts';
 import {
 	createBankConnection,
 	getConsentExpirationDate,
-	updatedBankConnection,
-} from '~/app/persistance/bank-connections';
+	updateBankConnection,
+} from '~/app/data-access/bank-connections';
 import {
 	createOrUpdateTransactions,
 	deleteTransactions,
-} from '~/app/persistance/transactions';
+} from '~/app/data-access/transactions';
 import {
 	exchangePublicToken,
 	fetchTransactions,
@@ -75,8 +75,8 @@ export async function action({ request }: ActionFunctionArgs) {
 	});
 
 	await db.transaction(async tx => {
-		const bankConnection = await createBankConnection(
-			{
+		const bankConnection = await createBankConnection({
+			data: {
 				access_token: tokenResponse.access_token,
 				plaid_item_id: itemResponse.item.item_id,
 				plaid_institution_id: institutionsResponse.institution.institution_id,
@@ -89,7 +89,7 @@ export async function action({ request }: ActionFunctionArgs) {
 				primary_color: institutionsResponse.institution.primary_color,
 			},
 			tx,
-		);
+		});
 
 		const accounts = await createAccounts(
 			accountsResponse.accounts.map(account => ({
@@ -145,13 +145,13 @@ export async function action({ request }: ActionFunctionArgs) {
 			removed.map(transaction => transaction.transaction_id),
 			tx,
 		);
-		await updatedBankConnection(
-			bankConnection.plaid_item_id,
-			{
+		await updateBankConnection({
+			bankConnectionId: bankConnection.plaid_item_id,
+			data: {
 				transaction_cursor: cursor,
 			},
 			tx,
-		);
+		});
 	});
 
 	return redirect('/overview');

@@ -1,6 +1,9 @@
 import { eq } from 'drizzle-orm';
-import { conflictUpdateSetAllColumns } from '~/app/utils/db';
-import { db, type Transaction } from '~/db/index.server';
+import {
+	type ColumnsSelection,
+	conflictUpdateSetAllColumns,
+} from '~/app/utils/db';
+import { type DB, db, type Transaction } from '~/db/index.server';
 import { accounts, type InsertAccount } from '~/db/schema';
 
 export async function createAccounts(
@@ -20,16 +23,19 @@ export async function createAccounts(
 	return newAccounts;
 }
 
-export async function updateAccount(
-	bankConnectionId: string,
-	{ id, ...data }: Partial<InsertAccount>,
-	tx?: Transaction,
-) {
-	const _db = tx ?? db;
-	const result = await _db
+export async function updateAccount({
+	id,
+	data,
+	tx = db,
+}: {
+	data: Partial<Omit<InsertAccount, 'id'>>;
+	id: string;
+	tx?: DB;
+}) {
+	const result = await tx
 		.update(accounts)
 		.set(data)
-		.where(eq(accounts.bank_connection_id, bankConnectionId))
+		.where(eq(accounts.id, id))
 		.returning();
 
 	return result;
@@ -42,6 +48,31 @@ export async function getAccounts(userId: string, tx?: Transaction) {
 	});
 
 	return data;
+}
+
+export async function getAccountsByBankConnectionId({
+	columns,
+	bankConnectionId,
+	tx = db,
+}: {
+	columns?: ColumnsSelection<typeof accounts>;
+	bankConnectionId: string;
+	tx?: DB;
+}) {
+	const accounts = await tx.query.accounts.findMany({
+		columns,
+		where: (table, { eq, and }) =>
+			and(
+				eq(table.bank_connection_id, bankConnectionId),
+				eq(table.is_active, true),
+			),
+	});
+
+	if (!accounts.length) {
+		throw new Error('Account does not exist.');
+	}
+
+	return accounts;
 }
 
 export async function getAccountsWithBank(userId: string, tx?: Transaction) {
