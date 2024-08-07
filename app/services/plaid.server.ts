@@ -217,6 +217,9 @@ export async function fetchTransactions({
 			columns: { access_token: true, transaction_cursor: true },
 			itemId,
 		});
+		if (!bankConnection) {
+			throw new Error('Bank connection does not exist.');
+		}
 		access_token = bankConnection.access_token;
 		transaction_cursor = bankConnection.transaction_cursor;
 	} else if (accessToken) {
