@@ -56,10 +56,6 @@ export async function getBankConnectionById({
 			and(eq(bankConnections.id, id), eq(table.is_active, true)),
 	});
 
-	if (!bankConnection) {
-		throw new Error('Bank connection does not exist.');
-	}
-
 	return bankConnection;
 }
 
@@ -78,11 +74,5 @@ export async function getBankConnectionByItemId({
 			and(eq(bankConnections.plaid_item_id, itemId), eq(table.is_active, true)),
 	});
 
-	if (!bankConnection) {
-		throw new Error('Bank connection does not exist.');
-	}
-
 	return bankConnection;
 }
-
-export async function getBankConnection() {}
