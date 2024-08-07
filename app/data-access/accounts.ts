@@ -68,10 +68,6 @@ export async function getAccountsByBankConnectionId({
 			),
 	});
 
-	if (!accounts.length) {
-		throw new Error('Account does not exist.');
-	}
-
 	return accounts;
 }
 
