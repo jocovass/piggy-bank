@@ -32,7 +32,7 @@ export default function LaunchLink({
 			: link;
 
 	const onSuccess = useCallback<PlaidLinkOnSuccess>(
-		publicToken => {
+		(publicToken, { institution }) => {
 			/**
 			 * If the itemId is passed in, we are in "update mode" so no need to
 			 * exchange the public token.
@@ -48,6 +48,7 @@ export default function LaunchLink({
 			} else {
 				exchangeToken.submit(
 					{
+						institutionId: institution?.institution_id ?? null,
 						publicToken,
 						userId,
 					},
