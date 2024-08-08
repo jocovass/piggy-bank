@@ -59,6 +59,27 @@ export async function getBankConnectionById({
 	return bankConnection;
 }
 
+export async function getBankConnectionByInstitutionId({
+	columns,
+	institutionId,
+	tx = db,
+}: {
+	columns?: ColumnsSelection<typeof bankConnections>;
+	institutionId: string;
+	tx?: DB;
+}) {
+	const bankConnection = await tx.query.bankConnections.findFirst({
+		columns,
+		where: (table, { eq, and }) =>
+			and(
+				eq(bankConnections.plaid_institution_id, institutionId),
+				eq(table.is_active, true),
+			),
+	});
+
+	return bankConnection;
+}
+
 export async function getBankConnectionByItemId({
 	columns,
 	itemId,

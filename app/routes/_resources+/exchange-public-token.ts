@@ -6,6 +6,7 @@ import { createAccounts } from '~/app/data-access/accounts';
 import {
 	createBankConnection,
 	getConsentExpirationDate,
+	getBankConnectionByInstitutionId,
 	updateBankConnection,
 } from '~/app/data-access/bank-connections';
 import {
@@ -24,6 +25,7 @@ import { createToastHeader } from '~/app/utils/toast.server';
 import { db } from '~/db/index.server';
 
 const schema = z.object({
+	institutionId: z.string(),
 	publicToken: z.string(),
 	userId: z.string(),
 });
@@ -51,6 +53,22 @@ export async function action({ request }: ActionFunctionArgs) {
 				}),
 			},
 		);
+	}
+
+	const bankConnection = await getBankConnectionByInstitutionId({
+		institutionId: submission.value.institutionId,
+		columns: { id: true },
+	});
+
+	if (!bankConnection) {
+		return json(null, {
+			status: 409,
+			headers: await createToastHeader({
+				title: 'Invalid request',
+				description: 'Bank account is already in use',
+				type: 'error',
+			}),
+		});
 	}
 
 	const { publicToken, userId } = submission.value;
