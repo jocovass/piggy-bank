@@ -66,7 +66,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		await db.transaction(async tx => {
 			/**
 			 * If there are more accounts associated with the bank connection
-			 * we don't want to cancel the connection from plaid only mark the account
+			 * we don't want to remove the connection from plaid only mark the account
 			 * and the associated transactions as inactive.
 			 */
 			if (accounts && accounts.length > 1) {

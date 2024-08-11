@@ -6,6 +6,7 @@ import {
 import { useFetcher, useLoaderData } from '@remix-run/react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { useMemo } from 'react';
+import BankConnections from '~/app/components/bank-connections';
 import { ElipsisVertical } from '~/app/components/icons/elipsis-vertical';
 import { Button } from '~/app/components/ui/button';
 import {
@@ -38,7 +39,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	return json({
 		accounts,
 		transactions,
-	});
+	} as const);
 }
 
 export default function Dashboard() {
@@ -62,6 +63,8 @@ export default function Dashboard() {
 				<p>Total balance</p>
 				<p className="text-2xl">{totalBalance}</p>
 			</div>
+
+			<BankConnections accounts={data.accounts} />
 
 			{data.accounts.map(account => (
 				<div key={account.id} className="relative mb-4 inline-block">

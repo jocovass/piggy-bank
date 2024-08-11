@@ -14,6 +14,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { type z } from 'zod';
+import { type DateToDateString } from '~/app/utils/type-helpers';
 
 export const users = pgTable('users', {
 	id: varchar('id', { length: 25 })
@@ -515,7 +516,9 @@ export type Session = z.infer<typeof selectSessionSchema>;
  * Bank Connection types
  */
 export const selectBankConnectionSchema = createSelectSchema(bankConnections);
-export type BankConnection = z.infer<typeof selectBankConnectionSchema>;
+export type BankConnection = DateToDateString<
+	z.infer<typeof selectBankConnectionSchema>
+>;
 export const insertBankConnectionSchema = createInsertSchema(bankConnections);
 export type InsertBankConnection = z.infer<typeof insertBankConnectionSchema>;
 
@@ -523,7 +526,7 @@ export type InsertBankConnection = z.infer<typeof insertBankConnectionSchema>;
  * Accounts types
  */
 export const selectAccountSchema = createSelectSchema(accounts);
-export type Account = z.infer<typeof selectAccountSchema>;
+export type Account = DateToDateString<z.infer<typeof selectAccountSchema>>;
 export const insertAccountSchema = createInsertSchema(accounts);
 export type InsertAccount = z.infer<typeof insertAccountSchema>;
 
