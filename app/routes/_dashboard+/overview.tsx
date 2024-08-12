@@ -3,18 +3,12 @@ import {
 	type LoaderFunctionArgs,
 	json,
 } from '@remix-run/node';
-import { useFetcher, useLoaderData } from '@remix-run/react';
+import { useLoaderData } from '@remix-run/react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { useMemo } from 'react';
-import { ElipsisVertical } from '~/app/components/icons/elipsis-vertical';
-import { Button } from '~/app/components/ui/button';
-import {
-	Popover,
-	PopoverClose,
-	PopoverContent,
-	PopoverTrigger,
-} from '~/app/components/ui/popover';
+import BankConnections from '~/app/components/bank-connections';
 import { getAccountsWithBank } from '~/app/data-access/accounts';
+import { getBankConnectionsForUser } from '~/app/data-access/bank-connections';
 import { getTransactions } from '~/app/data-access/transactions';
 import { AddBankAccount } from '~/app/routes/_resources+/generate-link-token';
 import { requireUser } from '~/app/utils/auth.server';
@@ -31,20 +25,23 @@ export const meta: MetaFunction = () => {
 export async function loader({ request }: LoaderFunctionArgs) {
 	const user = await requireUser(request);
 	const accounts = await getAccountsWithBank(user.id);
+	const bankConnections = await getBankConnectionsForUser({
+		userId: user.id,
+	});
 	const transactions = await getTransactions({
 		userId: user.id,
 	});
 
 	return json({
 		accounts,
+		bankConnections,
 		transactions,
-	});
+	} as const);
 }
 
 export default function Dashboard() {
 	const hints = useHints();
 	const data = useLoaderData<typeof loader>();
-	const removeBankConnection = useFetcher();
 
 	const totalBalance = useMemo(() => {
 		const total = data.accounts.reduce((acc, account) => {
@@ -63,49 +60,7 @@ export default function Dashboard() {
 				<p className="text-2xl">{totalBalance}</p>
 			</div>
 
-			{data.accounts.map(account => (
-				<div key={account.id} className="relative mb-4 inline-block">
-					<Popover>
-						<PopoverTrigger className="absolute right-0 top-0">
-							<ElipsisVertical />
-						</PopoverTrigger>
-						<PopoverContent className="flex w-32 flex-col p-2" align="start">
-							<PopoverClose asChild>
-								<Button
-									className="justify-start"
-									variant="ghost"
-									size="sm"
-									onClick={() =>
-										removeBankConnection.submit(
-											{
-												accountId: account.id,
-												bankConnectionId: account.bank_connection_id,
-											},
-											{
-												method: 'POST',
-												action: '/remove-bank-connection',
-											},
-										)
-									}
-								>
-									Delete
-								</Button>
-							</PopoverClose>
-						</PopoverContent>
-					</Popover>
-					<img
-						className={`h-14 w-14 rounded-full`}
-						src={`data:image/png;base64, ${account.bankConnection.logo}`}
-						alt={account.bankConnection.name}
-					/>
-					<p>{account.name}</p>
-					<p>
-						{formatCurrency(
-							account.current_balance ? +account.current_balance : 0,
-						)}
-					</p>
-				</div>
-			))}
+			<BankConnections connections={data.bankConnections} />
 
 			{data.transactions.map(transaction => (
 				<div
