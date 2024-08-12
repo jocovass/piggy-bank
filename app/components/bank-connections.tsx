@@ -27,8 +27,6 @@ export type BankConnectionsProps = {
 export default function BankConnections({ connections }: BankConnectionsProps) {
 	const hints = useHints();
 
-	console.log(connections);
-
 	return (
 		<div>
 			<Accordion type="single" collapsible className="w-full">
