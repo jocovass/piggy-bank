@@ -1,3 +1,5 @@
+export type HasDate<T> = T extends Date ? T | string : T;
+
 export type DateToDateString<T> = {
-	[K in keyof T]: T[K] extends Date ? Date | string : T[K];
+	[K in keyof T]: HasDate<T[K]>;
 };

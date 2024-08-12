@@ -97,3 +97,25 @@ export async function getBankConnectionByItemId({
 
 	return bankConnection;
 }
+
+export async function getBankConnectionsForUser({
+	columns,
+	userId,
+	tx = db,
+}: {
+	columns?: ColumnsSelection<typeof bankConnections>;
+	userId: string;
+	tx?: DB;
+}) {
+	const bankConnections = await tx.query.bankConnections.findMany({
+		columns,
+		where: (table, { eq }) => eq(table.user_id, userId),
+		with: {
+			accounts: {
+				where: (table, { eq }) => eq(table.is_active, true),
+			},
+		},
+	});
+
+	return bankConnections;
+}
