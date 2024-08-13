@@ -5,8 +5,8 @@ import {
 } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import { formatInTimeZone } from 'date-fns-tz';
-import { useMemo } from 'react';
 import BankConnections from '~/app/components/bank-connections';
+import TotalBalance from '~/app/components/total-balance';
 import { getAccountsWithBank } from '~/app/data-access/accounts';
 import { getBankConnectionsForUser } from '~/app/data-access/bank-connections';
 import { getTransactions } from '~/app/data-access/transactions';
@@ -43,23 +43,10 @@ export default function Dashboard() {
 	const hints = useHints();
 	const data = useLoaderData<typeof loader>();
 
-	const totalBalance = useMemo(() => {
-		const total = data.accounts.reduce((acc, account) => {
-			return (
-				acc + (account.current_balance ? Number(account.current_balance) : 0)
-			);
-		}, 0);
-		return formatCurrency(total);
-	}, [data.accounts]);
-
 	return (
 		<div>
 			<AddBankAccount />
-			<div className="mb-4 mt-4">
-				<p>Total balance</p>
-				<p className="text-2xl">{totalBalance}</p>
-			</div>
-
+			<TotalBalance connections={data.bankConnections} />
 			<BankConnections connections={data.bankConnections} />
 
 			{data.transactions.map(transaction => (
