@@ -40,7 +40,7 @@ export function Document({
 	theme: 'dark' | 'light';
 }) {
 	return (
-		<html lang="en">
+		<html lang="en" className={theme}>
 			<head>
 				<meta charSet="utf-8" />
 				<meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -48,7 +48,7 @@ export function Document({
 				<Meta />
 				<Links />
 			</head>
-			<body className={theme}>
+			<body>
 				{children}
 				<ScrollRestoration />
 				<Scripts />

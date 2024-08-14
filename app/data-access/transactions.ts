@@ -1,14 +1,20 @@
 import { eq, inArray } from 'drizzle-orm';
 import { conflictUpdateSetAllColumns } from '~/app/utils/db';
-import { type DB, db, type Transaction } from '~/db/index.server';
+import { type DB, db } from '~/db/index.server';
 import { transactions, type InsertTransaction } from '~/db/schema';
 
-export async function createOrUpdateTransactions(
-	plaidTransactions: InsertTransaction[],
-	tx?: Transaction,
-) {
-	const _db = tx ?? db;
-	await _db
+export async function createOrUpdateTransactions({
+	plaidTransactions,
+	tx = db,
+}: {
+	plaidTransactions: Omit<InsertTransaction, 'id'>[];
+	tx?: DB;
+}) {
+	if (!plaidTransactions.length) {
+		return [];
+	}
+
+	const result = await tx
 		.insert(transactions)
 		.values(plaidTransactions)
 		.onConflictDoUpdate({
@@ -22,15 +28,21 @@ export async function createOrUpdateTransactions(
 				'category',
 				'subcategory',
 			]),
-		});
+		})
+		.returning();
+
+	return result;
 }
 
-export async function deleteTransactions(
-	deletableTransactions: string[],
-	tx?: Transaction,
-) {
+export async function deleteTransactions({
+	deletableTransactions,
+	tx = db,
+}: {
+	deletableTransactions: string[];
+	tx?: DB;
+}) {
 	const _db = tx ?? db;
-	if (deletableTransactions.length === 0) {
+	if (!deletableTransactions.length) {
 		return;
 	}
 
@@ -43,15 +55,14 @@ export async function getTransactions({
 	userId,
 	offset = 0,
 	limit = 30,
-	tx,
+	tx = db,
 }: {
 	userId: string;
 	limit?: number;
 	offset?: number;
-	tx?: Transaction;
+	tx?: DB;
 }) {
-	const _db = tx ?? db;
-	return _db.query.transactions.findMany({
+	return tx.query.transactions.findMany({
 		where: (transaction, { eq }) => eq(transaction.user_id, userId),
 		limit,
 		offset,

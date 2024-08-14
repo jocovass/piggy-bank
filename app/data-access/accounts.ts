@@ -6,12 +6,18 @@ import {
 import { type DB, db, type Transaction } from '~/db/index.server';
 import { accounts, type InsertAccount } from '~/db/schema';
 
-export async function createAccounts(
-	plaidAccounts: InsertAccount[],
-	tx?: Transaction,
-) {
-	const _db = tx ?? db;
-	const newAccounts = await _db
+export async function createAccounts({
+	plaidAccounts,
+	tx = db,
+}: {
+	plaidAccounts: Omit<InsertAccount, 'id'>[];
+	tx?: DB;
+}) {
+	if (!plaidAccounts.length) {
+		return [];
+	}
+
+	const newAccounts = await tx
 		.insert(accounts)
 		.values(plaidAccounts)
 		.onConflictDoUpdate({

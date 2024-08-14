@@ -60,7 +60,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		columns: { id: true },
 	});
 
-	if (!bankConnection) {
+	if (bankConnection) {
 		return json(null, {
 			status: 409,
 			headers: await createToastHeader({
@@ -109,8 +109,8 @@ export async function action({ request }: ActionFunctionArgs) {
 			tx,
 		});
 
-		const accounts = await createAccounts(
-			accountsResponse.accounts.map(account => ({
+		const accounts = await createAccounts({
+			plaidAccounts: accountsResponse.accounts.map(account => ({
 				bank_connection_id: bankConnection.id,
 				user_id: userId,
 				plaid_account_id: account.account_id,
@@ -128,7 +128,8 @@ export async function action({ request }: ActionFunctionArgs) {
 				subtype: account.subtype,
 			})),
 			tx,
-		);
+		});
+
 		const transactionsToCreateOrUpdate = added
 			.concat(modified)
 			.map(transaction => {
@@ -158,11 +159,16 @@ export async function action({ request }: ActionFunctionArgs) {
 				};
 			});
 
-		await createOrUpdateTransactions(transactionsToCreateOrUpdate, tx);
-		await deleteTransactions(
-			removed.map(transaction => transaction.transaction_id),
+		await createOrUpdateTransactions({
+			plaidTransactions: transactionsToCreateOrUpdate,
 			tx,
-		);
+		});
+		await deleteTransactions({
+			deletableTransactions: removed.map(
+				transaction => transaction.transaction_id,
+			),
+			tx,
+		});
 		await updateBankConnection({
 			bankConnectionId: bankConnection.plaid_item_id,
 			data: {
