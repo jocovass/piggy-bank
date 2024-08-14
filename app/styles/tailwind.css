@@ -23,9 +23,7 @@
 		--border: 240 5.9% 90%;
 		--input: 240 5.9% 90%;
 		--ring: 346.8 77.2% 49.8%;
-		--radius: 0.5rem;
-
-		/* Chart colors */
+		--radius: 0.75rem;
 		--chart-green: 142 88% 28%;
 		--chart-1: 12 76% 61%;
 		--chart-2: 173 58% 39%;
@@ -54,8 +52,6 @@
 		--border: 240 3.7% 15.9%;
 		--input: 240 3.7% 15.9%;
 		--ring: 346.8 77.2% 49.8%;
-
-		/* Chart colors */
 		--chart-green: 142 88% 28%;
 		--chart-1: 220 70% 50%;
 		--chart-2: 160 60% 45%;
