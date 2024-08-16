@@ -1,6 +1,6 @@
 import { cn } from '~/app/utils/misc';
 
-export function ElipsisVertical({ className }: { className?: string }) {
+export default function Plus({ className }: { className?: string }) {
 	return (
 		<svg
 			fill="none"
@@ -12,7 +12,7 @@ export function ElipsisVertical({ className }: { className?: string }) {
 			<path
 				strokeLinecap="round"
 				strokeLinejoin="round"
-				d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z"
+				d="M12 4.5v15m7.5-7.5h-15"
 			/>
 		</svg>
 	);
