@@ -14,9 +14,13 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from '~/app/components/ui/popover';
+import { AddBankAccount } from '~/app/routes/_resources+/generate-link-token';
 import { useHints } from '~/app/utils/client-hints';
 import { formatCurrency } from '~/app/utils/format-currency';
 import { type Account, type BankConnection } from '~/db/schema';
+import Plus from './icons/plus';
+import Spinner from './icons/spinner';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 
 export type BankConnectionsProps = {
 	connections: (BankConnection & {
@@ -28,63 +32,84 @@ export default function BankConnections({ connections }: BankConnectionsProps) {
 	const hints = useHints();
 
 	return (
-		<div>
-			<Accordion type="single" collapsible className="w-full">
-				{connections.map(connection => {
-					const balance = connection.accounts.reduce(
-						(acc, account) => acc + Number(account.available_balance),
-						0,
-					);
-
-					return (
-						<AccordionItem
-							key={connection.id}
-							value={connection.id}
-							className="border-b-0"
+		<Card>
+			<CardHeader className="flex-row items-center justify-between pb-0">
+				<CardTitle className="text-base">Accounts</CardTitle>
+				<AddBankAccount>
+					{({ loading }) => (
+						<Button
+							className="size-8 rounded-full p-0"
+							disabled={loading}
+							type="submit"
+							variant="ghost"
 						>
-							<AccordionTrigger>
-								<div>
-									<div className="flex items-center gap-2 pb-2">
-										<img
-											className="h-8 w-8 rounded-full"
-											src={`data:image/png;base64, ${connection.logo}`}
-											alt={connection.name}
-											title={connection.name}
-										/>
+							{loading ? (
+								<Spinner className="size-4" />
+							) : (
+								<Plus className="size-4" />
+							)}
+						</Button>
+					)}
+				</AddBankAccount>
+			</CardHeader>
+			<CardContent>
+				<Accordion type="single" collapsible className="w-full">
+					{connections.map(connection => {
+						const balance = connection.accounts.reduce(
+							(acc, account) => acc + Number(account.available_balance),
+							0,
+						);
 
-										<div className="flex flex-col items-start px-2">
-											<p className="text-sm font-medium text-gray-900 dark:text-white">
-												{connection.name}
-											</p>
-											<p className="text-xs text-gray-500 dark:text-gray-400">
-												Connected:{' '}
-												{formatInTimeZone(
-													connection.created_at,
-													hints.timeZone,
-													'dd.MM.yyyy',
-												)}
-											</p>
+						return (
+							<AccordionItem
+								key={connection.id}
+								value={connection.id}
+								className="border-b-0"
+							>
+								<AccordionTrigger className="[&>svg]:self-start">
+									<div>
+										<div className="flex items-center gap-2 pb-2">
+											<img
+												className="h-8 w-8 rounded-full"
+												src={`data:image/png;base64, ${connection.logo}`}
+												alt={connection.name}
+												title={connection.name}
+											/>
+
+											<div className="flex flex-col items-start px-2">
+												<p className="text-sm font-medium text-gray-900 dark:text-white">
+													{connection.name}
+												</p>
+												<p className="text-xs text-gray-500 dark:text-gray-400">
+													Connected:{' '}
+													{formatInTimeZone(
+														connection.created_at,
+														hints.timeZone,
+														'dd.MM.yyyy',
+													)}
+												</p>
+											</div>
+										</div>
+										<div>
+											<p>Available balance: {formatCurrency(balance)}</p>
 										</div>
 									</div>
-									<div>
-										<p>Available balance: {formatCurrency(balance)}</p>
-									</div>
-								</div>
-							</AccordionTrigger>
-							<AccordionContent className="flex gap-4 overflow-x-auto pt-2">
-								{connection.accounts.map(account => (
-									<Account
-										key={account.id}
-										account={account}
-										logo={connection.logo}
-									/>
-								))}
-							</AccordionContent>
-						</AccordionItem>
-					);
-				})}
-			</Accordion>
-		</div>
+								</AccordionTrigger>
+								<AccordionContent className="flex gap-4 overflow-x-auto pt-2">
+									{connection.accounts.map(account => (
+										<Account
+											key={account.id}
+											account={account}
+											logo={connection.logo}
+										/>
+									))}
+								</AccordionContent>
+							</AccordionItem>
+						);
+					})}
+				</Accordion>
+			</CardContent>
+		</Card>
 	);
 }
 

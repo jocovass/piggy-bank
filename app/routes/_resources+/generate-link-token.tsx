@@ -1,6 +1,8 @@
 import { parseWithZod } from '@conform-to/zod';
 import { json, type ActionFunctionArgs } from '@remix-run/node';
 import { useFetcher } from '@remix-run/react';
+import { type ReactNode } from 'react';
+import { useSpinDelay } from 'spin-delay';
 import LaunchLink from '~/app/components/launch-link';
 import { Button } from '~/app/components/ui/button';
 import { generateLinkToken, isPliadError } from '~/app/services/plaid.server';
@@ -70,7 +72,11 @@ export async function action({ request }: ActionFunctionArgs) {
 	}
 }
 
-export function AddBankAccount() {
+export function AddBankAccount({
+	children,
+}: {
+	children?: ({ loading }: { loading: boolean }) => ReactNode;
+}) {
 	const generateLinkToken = useFetcher<typeof action>();
 	const user = useUser();
 	const linkToken =
@@ -78,10 +84,22 @@ export function AddBankAccount() {
 			? generateLinkToken.data.data.link_token
 			: null;
 
+	const loading = useSpinDelay(generateLinkToken.state !== 'idle', {
+		minDuration: 1000,
+	});
+
 	return (
 		<>
-			<generateLinkToken.Form method="POST" action="/generate-link-token">
-				<Button type="submit">Connect account</Button>
+			<generateLinkToken.Form
+				className="!m-0"
+				method="POST"
+				action="/generate-link-token"
+			>
+				{children ? (
+					children({ loading: loading })
+				) : (
+					<Button type="submit">Connect account</Button>
+				)}
 			</generateLinkToken.Form>
 
 			{linkToken && <LaunchLink link={linkToken} userId={user.id} />}
