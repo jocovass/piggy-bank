@@ -104,7 +104,7 @@ export default function TotalBalance({ connections }: TotalBalanceProps) {
 												<tspan
 													x={viewBox.cx}
 													y={viewBox.cy}
-													className="fill-foreground text-base font-bold"
+													className="fill-foreground text-sm font-bold"
 												>
 													{totalBalance}
 												</tspan>

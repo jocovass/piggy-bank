@@ -413,6 +413,10 @@ export const transactions = pgTable(
 			}),
 		/**
 		 * The settled value of the transaction.
+		 *
+		 * In plaid positive values inidicate money moving out of the acccount and
+		 * nagative values indicate money moving into the account. This is true
+		 * for both credit and debit accounts.
 		 */
 		amount: decimal('amount', { precision: 20, scale: 2 }).notNull(),
 		/**
