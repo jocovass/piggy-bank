@@ -1,4 +1,5 @@
 import { parseWithZod } from '@conform-to/zod';
+import { UTCDate } from '@date-fns/utc';
 import { type ActionFunctionArgs, redirect, json } from '@remix-run/node';
 import invariant from 'tiny-invariant';
 import { z } from 'zod';
@@ -151,7 +152,9 @@ export async function action({ request }: ActionFunctionArgs) {
 					pending: transaction.pending,
 					payment_channel: transaction.payment_channel,
 					logo_url: transaction.logo_url,
-					authorized_data: transaction.authorized_date,
+					authorized_date: new UTCDate(
+						transaction.authorized_date || UTCDate.now(),
+					),
 					plaid_transaction_id: transaction.transaction_id,
 					category: transaction.personal_finance_category?.primary,
 					subcategory: transaction.personal_finance_category?.detailed,

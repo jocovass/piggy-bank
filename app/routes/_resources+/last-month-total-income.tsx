@@ -33,6 +33,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		.where(
 			and(
 				eq(transactions.user_id, user.id),
+				/**
+				 * Negative amount means income
+				 */
 				lt(transactions.amount, '0'),
 				gte(transactions.authorized_date, firstDayOfMonth),
 				lte(transactions.authorized_date, today),
@@ -50,7 +53,7 @@ const chartConfig: ChartConfig = {
 
 export default function LastMonthTotalIncome() {
 	const lastMonthIncomFetcher = useFetcher<typeof loader>();
-
+	console.log(lastMonthIncomFetcher.data);
 	const chartData = useMemo(() => {
 		return [
 			{
