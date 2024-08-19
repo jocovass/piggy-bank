@@ -74,7 +74,7 @@ const chartConfig = {
 
 export default function CurrentMonthExpense() {
 	const lastMonthExpense = useFetcher<typeof loader>();
-	console.log(lastMonthExpense.data);
+
 	useEffect(() => {
 		lastMonthExpense.submit(null, {
 			method: 'GET',
