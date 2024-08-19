@@ -1,18 +1,16 @@
-// import { UTCDate } from '@date-fns/utc';
 import { type LoaderFunctionArgs, json } from '@remix-run/node';
 import { useFetcher } from '@remix-run/react';
 import { sql } from 'drizzle-orm';
-import { useEffect, useMemo } from 'react';
-import {
-	Label,
-	PolarGrid,
-	PolarRadiusAxis,
-	RadialBar,
-	RadialBarChart,
-} from 'recharts';
+import { useEffect } from 'react';
+import { Line, LineChart } from 'recharts';
 import { z } from 'zod';
 import { Card, CardContent } from '~/app/components/ui/card';
-import { type ChartConfig, ChartContainer } from '~/app/components/ui/chart';
+import {
+	type ChartConfig,
+	ChartContainer,
+	ChartTooltip,
+	ChartTooltipContent,
+} from '~/app/components/ui/chart';
 import { requireUser } from '~/app/utils/auth.server';
 import { formatCurrency } from '~/app/utils/format-currency';
 import { db } from '~/db/index.server';
@@ -22,6 +20,7 @@ const ResponseSchema = z.object({
 	amount: z.coerce.number(),
 	total_amount: z.coerce.number(),
 });
+
 export async function loader({ request }: LoaderFunctionArgs) {
 	const user = await requireUser(request);
 	const statement = sql`
@@ -66,22 +65,29 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	return json({ data });
 }
 
-export default function LastMonthExpense() {
-	const lastMonthExpense = useFetcher<typeof loader>();
+const chartConfig = {
+	total_amount: {
+		label: 'Amount',
+		color: 'hsl(var(--chart-5))',
+	},
+} satisfies ChartConfig;
 
+export default function CurrentMonthExpense() {
+	const lastMonthExpense = useFetcher<typeof loader>();
+	console.log(lastMonthExpense.data);
 	useEffect(() => {
 		lastMonthExpense.submit(null, {
 			method: 'GET',
-			action: '/last-month-expense',
+			action: '/current-month-expense',
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	return (
 		<Card>
-			<CardContent className="flex items-center justify-between gap-2 p-1 pl-5">
+			<CardContent className="flex items-center justify-between gap-2 px-5 py-2">
 				<div className="flex flex-col gap-1">
-					<p className="text-xs text-muted-foreground">Last month expense</p>
+					<p className="text-xs text-muted-foreground">Current month expense</p>
 					<p className="text-3xl font-bold">
 						{formatCurrency(
 							// The last item in the array is the total of all the previous days
@@ -90,6 +96,25 @@ export default function LastMonthExpense() {
 						)}
 					</p>
 				</div>
+
+				<ChartContainer
+					config={chartConfig}
+					className="min-h-[90px] max-w-[120px]"
+				>
+					<LineChart accessibilityLayer data={lastMonthExpense.data?.data}>
+						<ChartTooltip
+							cursor={false}
+							content={<ChartTooltipContent className="min-w-44" hideLabel />}
+						/>
+						<Line
+							dataKey="total_amount"
+							type="natural"
+							stroke="var(--color-total_amount)"
+							strokeWidth={2}
+							dot={false}
+						/>
+					</LineChart>
+				</ChartContainer>
 			</CardContent>
 		</Card>
 	);
