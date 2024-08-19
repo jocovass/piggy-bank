@@ -10,7 +10,8 @@ import TotalBalance from '~/app/components/total-balance';
 import { getAccountsWithBank } from '~/app/data-access/accounts';
 import { getBankConnectionsForUser } from '~/app/data-access/bank-connections';
 import { getTransactions } from '~/app/data-access/transactions';
-import LastMonthTotalIncome from '~/app/routes/_resources+/last-month-total-income';
+import CurrentMonthExpense from '~/app/routes/_resources+/current-month-expense';
+import CurrentMonthIncome from '~/app/routes/_resources+/current-month-income';
 import { requireUser } from '~/app/utils/auth.server';
 import { useHints } from '~/app/utils/client-hints';
 import { formatCurrency } from '~/app/utils/format-currency';
@@ -47,7 +48,8 @@ export default function Dashboard() {
 		<div>
 			<TotalBalance connections={data.bankConnections} />
 			<BankConnections connections={data.bankConnections} />
-			<LastMonthTotalIncome />
+			<CurrentMonthIncome />
+			<CurrentMonthExpense />
 			{data.transactions.map(transaction => (
 				<div
 					className="flex gap-4 even:bg-gray-100 even:dark:bg-gray-800"

@@ -33,6 +33,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		.where(
 			and(
 				eq(transactions.user_id, user.id),
+				/**
+				 * Negative amount means income
+				 */
 				lt(transactions.amount, '0'),
 				gte(transactions.authorized_date, firstDayOfMonth),
 				lte(transactions.authorized_date, today),
@@ -48,7 +51,7 @@ const chartConfig: ChartConfig = {
 	},
 };
 
-export default function LastMonthTotalIncome() {
+export default function CurrentMonthIncome() {
 	const lastMonthIncomFetcher = useFetcher<typeof loader>();
 
 	const chartData = useMemo(() => {
@@ -81,7 +84,7 @@ export default function LastMonthTotalIncome() {
 	useEffect(() => {
 		lastMonthIncomFetcher.submit(null, {
 			method: 'GET',
-			action: '/last-month-total-income',
+			action: '/current-month-income',
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
@@ -90,9 +93,7 @@ export default function LastMonthTotalIncome() {
 		<Card>
 			<CardContent className="flex items-center justify-between gap-2 p-1 pl-5">
 				<div className="flex flex-col gap-1">
-					<p className="text-xs text-muted-foreground">
-						Last month total income
-					</p>
+					<p className="text-xs text-muted-foreground">Current month income</p>
 					<p className="text-3xl font-bold">
 						{formatCurrency(
 							Number(lastMonthIncomFetcher.data?.amount?.slice(1)) || 0,
@@ -108,8 +109,8 @@ export default function LastMonthTotalIncome() {
 						data={chartData}
 						startAngle={0}
 						endAngle={chartFillAmount}
-						innerRadius={35}
-						outerRadius={58}
+						innerRadius={37}
+						outerRadius={53}
 					>
 						<PolarGrid
 							gridType="circle"
