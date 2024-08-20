@@ -538,6 +538,8 @@ export type InsertAccount = z.infer<typeof insertAccountSchema>;
  * Transactions types
  */
 export const selectTransactionSchema = createSelectSchema(transactions);
-export type Transaction = z.infer<typeof selectTransactionSchema>;
+export type Transaction = DateToDateString<
+	z.infer<typeof selectTransactionSchema>
+>;
 export const insertTransactionSchema = createInsertSchema(transactions);
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
