@@ -4,8 +4,8 @@ import {
 	json,
 } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
-import { formatInTimeZone } from 'date-fns-tz';
 import BankConnections from '~/app/components/bank-connections';
+import RecentTransactions from '~/app/components/recent-transactions';
 import TotalBalance from '~/app/components/total-balance';
 import { getAccountsWithBank } from '~/app/data-access/accounts';
 import { getBankConnectionsForUser } from '~/app/data-access/bank-connections';
@@ -13,8 +13,6 @@ import { getTransactions } from '~/app/data-access/transactions';
 import CurrentMonthExpense from '~/app/routes/_resources+/current-month-expense';
 import CurrentMonthIncome from '~/app/routes/_resources+/current-month-income';
 import { requireUser } from '~/app/utils/auth.server';
-import { useHints } from '~/app/utils/client-hints';
-import { formatCurrency } from '~/app/utils/format-currency';
 
 export const meta: MetaFunction = () => {
 	return [
@@ -41,7 +39,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function Dashboard() {
-	const hints = useHints();
 	const data = useLoaderData<typeof loader>();
 
 	return (
@@ -50,22 +47,7 @@ export default function Dashboard() {
 			<BankConnections connections={data.bankConnections} />
 			<CurrentMonthIncome />
 			<CurrentMonthExpense />
-			{data.transactions.map(transaction => (
-				<div
-					className="flex gap-4 even:bg-gray-100 even:dark:bg-gray-800"
-					key={transaction.id}
-				>
-					<p>{transaction.name}</p>
-					<p>{formatCurrency(+transaction.amount)}</p>
-					<p>
-						{formatInTimeZone(
-							transaction.created_at,
-							hints.timeZone,
-							'dd.MM.yyyy',
-						)}
-					</p>
-				</div>
-			))}
+			<RecentTransactions transactions={data.transactions || []} />
 		</div>
 	);
 }

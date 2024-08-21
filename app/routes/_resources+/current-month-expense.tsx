@@ -68,7 +68,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 const chartConfig = {
 	total_amount: {
 		label: 'Amount',
-		color: 'hsl(var(--chart-5))',
+		color: 'hsl(var(--primary))',
 	},
 } satisfies ChartConfig;
 
