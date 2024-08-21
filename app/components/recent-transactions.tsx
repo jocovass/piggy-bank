@@ -13,6 +13,7 @@ import { useHints } from '~/app/utils/client-hints';
 import { formatCurrency } from '~/app/utils/format-currency';
 import { type Transaction } from '~/db/schema';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import {
 	Table,
 	TableBody,
@@ -97,9 +98,9 @@ export default function RecentTransactions({
 						className={`flex h-5 w-5 items-center justify-center rounded-full ${isPending ? 'bg-yellow-300' : 'bg-green-600'}`}
 					>
 						{isPending ? (
-							<ArrowPath className="size-4 stroke-2" />
+							<ArrowPath className="size-4 stroke-2 text-white" />
 						) : (
-							<Check className="size-4 stroke-2" />
+							<Check className="size-4 stroke-2 text-white" />
 						)}
 					</div>
 				);
@@ -116,60 +117,65 @@ export default function RecentTransactions({
 	});
 
 	return (
-		<div className="w-full">
-			<div className="rounded-md border">
-				<Table>
-					<TableHeader>
-						{table.getHeaderGroups().map(headerGroup => (
-							<TableRow key={headerGroup.id} className="bg-card">
-								{headerGroup.headers.map(header => {
-									return (
-										<TableHead
-											key={header.id}
-											className="min-w-20 font-bold text-card-foreground"
-										>
-											{header.isPlaceholder
-												? null
-												: flexRender(
-														header.column.columnDef.header,
-														header.getContext(),
-													)}
-										</TableHead>
-									);
-								})}
-							</TableRow>
-						))}
-					</TableHeader>
-					<TableBody>
-						{table.getRowModel().rows?.length ? (
-							table.getRowModel().rows.map(row => (
-								<TableRow
-									key={row.id}
-									data-state={row.getIsSelected() && 'selected'}
-								>
-									{row.getVisibleCells().map(cell => (
-										<TableCell key={cell.id}>
-											{flexRender(
-												cell.column.columnDef.cell,
-												cell.getContext(),
-											)}
-										</TableCell>
-									))}
+		<Card className="">
+			<CardHeader>
+				<CardTitle className="text-base">Recent transactions</CardTitle>
+			</CardHeader>
+			<CardContent className="pt-0">
+				<div className="rounded-lg border">
+					<Table className="max-h-[250px]">
+						<TableHeader>
+							{table.getHeaderGroups().map(headerGroup => (
+								<TableRow key={headerGroup.id}>
+									{headerGroup.headers.map(header => {
+										return (
+											<TableHead
+												key={header.id}
+												className="min-w-20 bg-accent font-bold text-card-foreground first-of-type:rounded-tl-lg last-of-type:rounded-tr-lg"
+											>
+												{header.isPlaceholder
+													? null
+													: flexRender(
+															header.column.columnDef.header,
+															header.getContext(),
+														)}
+											</TableHead>
+										);
+									})}
 								</TableRow>
-							))
-						) : (
-							<TableRow>
-								<TableCell
-									colSpan={columns.length}
-									className="h-24 text-center"
-								>
-									No results.
-								</TableCell>
-							</TableRow>
-						)}
-					</TableBody>
-				</Table>
-			</div>
-		</div>
+							))}
+						</TableHeader>
+						<TableBody>
+							{table.getRowModel().rows?.length ? (
+								table.getRowModel().rows.map(row => (
+									<TableRow
+										key={row.id}
+										data-state={row.getIsSelected() && 'selected'}
+									>
+										{row.getVisibleCells().map(cell => (
+											<TableCell key={cell.id}>
+												{flexRender(
+													cell.column.columnDef.cell,
+													cell.getContext(),
+												)}
+											</TableCell>
+										))}
+									</TableRow>
+								))
+							) : (
+								<TableRow>
+									<TableCell
+										colSpan={columns.length}
+										className="h-24 text-center"
+									>
+										No results.
+									</TableCell>
+								</TableRow>
+							)}
+						</TableBody>
+					</Table>
+				</div>
+			</CardContent>
+		</Card>
 	);
 }
