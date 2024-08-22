@@ -65,31 +65,24 @@
 	body {
 		@apply bg-background text-foreground;
 	}
-}
 
-@layer components {
-	/* Firefox */
-	.custom-scrollbar {
+	body::-webkit-scrollbar {
+		width: 0.5rem;
+	}
+
+	body::-webkit-scrollbar-thumb {
+		background-color: var(--accent);
+		border-radius: 0.7rem;
+	}
+
+	body::-webkit-scrollbar-track {
+		background-color: transparent;
+		border-radius: 0.7rem;
+	}
+
+	/* Browsers without `::-webkit-scrollbar-*` support */
+	html {
 		scrollbar-width: thin;
-		scrollbar-color: var(--muted) var(--background);
-	}
-
-	/* Chrome, Edge, and Safari */
-	.custom-scrollbar::-webkit-scrollbar {
-		width: 15px;
-	}
-
-	.custom-scrollbar::-webkit-scrollbar-track {
-		box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
-		background-color: red;
-		color: red;
-	}
-
-	.custom-scrollbar::-webkit-scrollbar-thumb {
-		background-color: var(--secondary);
-		border-radius: 14px;
-		/* border: 3px solid var(--primary); */
-		background-color: darkgrey;
-		outline: 1px solid slategrey;
+		scrollbar-color: hsl(240 4.8% 75%) transparent;
 	}
 }

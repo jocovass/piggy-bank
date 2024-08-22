@@ -122,9 +122,9 @@ export default function RecentTransactions({
 				<CardTitle className="text-base">Recent transactions</CardTitle>
 			</CardHeader>
 			<CardContent className="pt-0">
-				<div className="rounded-lg border">
-					<Table className="max-h-[250px]">
-						<TableHeader>
+				<div className="relative max-h-[300px] overflow-y-auto rounded-lg border">
+					<Table>
+						<TableHeader className="sticky top-0 z-10">
 							{table.getHeaderGroups().map(headerGroup => (
 								<TableRow key={headerGroup.id}>
 									{headerGroup.headers.map(header => {
