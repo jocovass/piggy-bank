@@ -100,16 +100,26 @@ export async function updateAccountTransactions({
 	return result;
 }
 
-export async function getUserTransactionsForLastThirtyDays({
+export async function getUserTransactionsForStatisticsCard({
+	filter,
 	userId,
 	tx = db,
 }: {
+	filter: 'seven_days' | 'thirty_days' | 'year';
 	userId: string;
 	tx?: DB;
 }) {
+	let sqlDateRange = sql`(CURRENT_DATE - INTERVAL '29 days')::DATE`;
+
+	if (filter === 'seven_days') {
+		sqlDateRange = sql`(CURRENT_DATE - INTERVAL '6 days')::DATE`;
+	} else if (filter === 'year') {
+		sqlDateRange = sql`(CURRENT_DATE - INTERVAL '365 days')::DATE`;
+	}
+
 	const query = sql`
 		WITH RECURSIVE dates AS (
-	  SELECT (CURRENT_DATE - INTERVAL '29 days')::DATE as day
+	  SELECT ${sqlDateRange} as day
 	  UNION ALL
 	  SELECT (day + INTERVAL '1 day')::DATE
 	  FROM dates

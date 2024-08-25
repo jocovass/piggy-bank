@@ -1,10 +1,12 @@
-// import { parseWithZod } from '@conform-to/zod';
+import { parseWithZod } from '@conform-to/zod';
 import { type ActionFunctionArgs, json } from '@remix-run/node';
 import { useFetcher } from '@remix-run/react';
 import { formatInTimeZone } from 'date-fns-tz';
 import { useEffect, useState } from 'react';
 import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
+import { useSpinDelay } from 'spin-delay';
 import { z } from 'zod';
+import Spinner from '~/app/components/icons/spinner';
 import {
 	Card,
 	CardContent,
@@ -24,20 +26,45 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '~/app/components/ui/select';
-import { getUserTransactionsForLastThirtyDays } from '~/app/data-access/transactions';
+import { getUserTransactionsForStatisticsCard } from '~/app/data-access/transactions';
 import { requireUser } from '~/app/utils/auth.server';
 import { useHints } from '~/app/utils/client-hints';
+import { createToastHeader } from '~/app/utils/toast.server';
 
 export const schema = z.object({
-	filter: z.enum(['week', 'thirty_days', 'year']),
+	filter: z.enum(['seven_days', 'thirty_days', 'year']),
 });
 
 export async function action({ request }: ActionFunctionArgs) {
 	const user = await requireUser(request);
-	const transactions = await getUserTransactionsForLastThirtyDays({
+	const form = await request.formData();
+	const submission = await parseWithZod(form, {
+		schema,
+		async: true,
+	});
+
+	if (submission.status !== 'success') {
+		return json(
+			{
+				data: submission.reply(),
+				status: 'error',
+			} as const,
+			{
+				status: 400,
+				headers: await createToastHeader({
+					title: 'Statistics could not be loaded',
+					description: 'Please include a valid filter',
+					type: 'error',
+				}),
+			},
+		);
+	}
+
+	const transactions = await getUserTransactionsForStatisticsCard({
+		filter: submission.value.filter,
 		userId: user.id,
 	});
-	return json({ transactions });
+	return json({ transactions, status: 'success' } as const);
 }
 
 const chartConfig = {
@@ -52,12 +79,19 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export default function Statistics() {
-	const data = useFetcher<typeof action>();
+	const dataFetcher = useFetcher<typeof action>();
 	const { timeZone } = useHints();
 	const [filter, setFilter] = useState('thirty_days');
+	const transactions =
+		dataFetcher.data?.status === 'success'
+			? dataFetcher.data?.transactions
+			: [];
+	const loading = useSpinDelay(dataFetcher.state !== 'idle', {
+		minDuration: 1000,
+	});
 
 	useEffect(() => {
-		data.submit(
+		dataFetcher.submit(
 			{ filter },
 			{
 				method: 'POST',
@@ -72,34 +106,37 @@ export default function Statistics() {
 			<CardHeader className="flex-row items-center justify-between pb-0">
 				<CardTitle className="text-base">Statistics</CardTitle>
 
-				<Select
-					value={filter}
-					onValueChange={value => {
-						setFilter(value);
-						data.submit(
-							{ filter: value },
-							{
-								method: 'POST',
-								action: '/statistics',
-							},
-						);
-					}}
-				>
-					<SelectTrigger className="w-[130px]">
-						<SelectValue placeholder="Interval" />
-					</SelectTrigger>
-					<SelectContent>
-						<SelectItem value="week">Week</SelectItem>
-						<SelectItem value="thirty_days">30 Days</SelectItem>
-						<SelectItem value="year">Year</SelectItem>
-					</SelectContent>
-				</Select>
+				<div className="flex items-center gap-2">
+					{loading && <Spinner className="size-4" />}
+					<Select
+						value={filter}
+						onValueChange={value => {
+							setFilter(value);
+							dataFetcher.submit(
+								{ filter: value },
+								{
+									method: 'POST',
+									action: '/statistics',
+								},
+							);
+						}}
+					>
+						<SelectTrigger className="w-[130px]">
+							<SelectValue placeholder="Interval" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="seven_days">7 Days</SelectItem>
+							<SelectItem value="thirty_days">30 Days</SelectItem>
+							<SelectItem value="year">Year</SelectItem>
+						</SelectContent>
+					</Select>
+				</div>
 			</CardHeader>
 			<CardContent>
 				<ChartContainer config={chartConfig} className="h-[300px] w-full">
 					<AreaChart
 						accessibilityLayer
-						data={data.data?.transactions}
+						data={transactions}
 						margin={{
 							left: 12,
 							right: 12,
