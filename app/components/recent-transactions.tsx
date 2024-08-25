@@ -108,8 +108,6 @@ export default function RecentTransactions({
 		},
 	];
 
-	console.log(transactions);
-
 	const table = useReactTable({
 		data: transactions,
 		columns,

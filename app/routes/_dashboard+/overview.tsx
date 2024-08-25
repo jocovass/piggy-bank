@@ -12,6 +12,7 @@ import { getBankConnectionsForUser } from '~/app/data-access/bank-connections';
 import { getTransactions } from '~/app/data-access/transactions';
 import CurrentMonthExpense from '~/app/routes/_resources+/current-month-expense';
 import CurrentMonthIncome from '~/app/routes/_resources+/current-month-income';
+import Statistics from '~/app/routes/_resources+/statistics';
 import { requireUser } from '~/app/utils/auth.server';
 
 export const meta: MetaFunction = () => {
@@ -48,6 +49,7 @@ export default function Dashboard() {
 			<CurrentMonthIncome />
 			<CurrentMonthExpense />
 			<RecentTransactions transactions={data.transactions || []} />
+			<Statistics />
 		</div>
 	);
 }

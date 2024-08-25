@@ -3,7 +3,6 @@ import { useFetcher } from '@remix-run/react';
 import { sql } from 'drizzle-orm';
 import { useEffect } from 'react';
 import { Line, LineChart } from 'recharts';
-import { z } from 'zod';
 import { Card, CardContent } from '~/app/components/ui/card';
 import {
 	type ChartConfig,
@@ -11,15 +10,10 @@ import {
 	ChartTooltip,
 	ChartTooltipContent,
 } from '~/app/components/ui/chart';
+import { TotalExpenseSchema } from '~/app/data-access/transactions';
 import { requireUser } from '~/app/utils/auth.server';
 import { formatCurrency } from '~/app/utils/format-currency';
 import { db } from '~/db/index.server';
-
-const ResponseSchema = z.object({
-	date: z.string(),
-	amount: z.coerce.number(),
-	total_amount: z.coerce.number(),
-});
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const user = await requireUser(request);
@@ -55,7 +49,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 	const result = await db.execute(statement);
 	const data = result.rows.map(row => {
-		const parsedData = ResponseSchema.safeParse(row);
+		const parsedData = TotalExpenseSchema.safeParse(row);
 		if (parsedData.success) {
 			return parsedData.data;
 		}
