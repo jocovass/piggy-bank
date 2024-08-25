@@ -1,5 +1,10 @@
-import { useState } from 'react';
+// import { parseWithZod } from '@conform-to/zod';
+import { type ActionFunctionArgs, json } from '@remix-run/node';
+import { useFetcher } from '@remix-run/react';
+import { formatInTimeZone } from 'date-fns-tz';
+import { useEffect, useState } from 'react';
 import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts';
+import { z } from 'zod';
 import {
 	Card,
 	CardContent,
@@ -19,51 +24,82 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '~/app/components/ui/select';
+import { getUserTransactionsForLastThirtyDays } from '~/app/data-access/transactions';
+import { requireUser } from '~/app/utils/auth.server';
+import { useHints } from '~/app/utils/client-hints';
 
-const chartData = [
-	{ month: 'January', desktop: 186, mobile: 80 },
-	{ month: 'February', desktop: 305, mobile: 200 },
-	{ month: 'March', desktop: 237, mobile: 120 },
-	{ month: 'April', desktop: 73, mobile: 190 },
-	{ month: 'May', desktop: 209, mobile: 130 },
-	{ month: 'June', desktop: 214, mobile: 140 },
-];
+export const schema = z.object({
+	filter: z.enum(['week', 'thirty_days', 'year']),
+});
+
+export async function action({ request }: ActionFunctionArgs) {
+	const user = await requireUser(request);
+	const transactions = await getUserTransactionsForLastThirtyDays({
+		userId: user.id,
+	});
+	return json({ transactions });
+}
+
 const chartConfig = {
-	desktop: {
-		label: 'Desktop',
-		color: 'hsl(var(--chart-1))',
-	},
-	mobile: {
-		label: 'Mobile',
+	total_income: {
+		label: 'Income',
 		color: 'hsl(var(--chart-2))',
+	},
+	total_expense: {
+		label: 'Expense',
+		color: 'hsl(var(--chart-1))',
 	},
 } satisfies ChartConfig;
 
 export default function Statistics() {
-	const [filter, setFilter] = useState('month');
+	const data = useFetcher<typeof action>();
+	const { timeZone } = useHints();
+	const [filter, setFilter] = useState('thirty_days');
 
-	console.log('filter', filter);
+	useEffect(() => {
+		data.submit(
+			{ filter },
+			{
+				method: 'POST',
+				action: '/statistics',
+			},
+		);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	return (
 		<Card>
 			<CardHeader className="flex-row items-center justify-between pb-0">
 				<CardTitle className="text-base">Statistics</CardTitle>
 
-				<Select value={filter} onValueChange={setFilter}>
+				<Select
+					value={filter}
+					onValueChange={value => {
+						setFilter(value);
+						data.submit(
+							{ filter: value },
+							{
+								method: 'POST',
+								action: '/statistics',
+							},
+						);
+					}}
+				>
 					<SelectTrigger className="w-[130px]">
 						<SelectValue placeholder="Interval" />
 					</SelectTrigger>
 					<SelectContent>
 						<SelectItem value="week">Week</SelectItem>
-						<SelectItem value="month">Month</SelectItem>
+						<SelectItem value="thirty_days">30 Days</SelectItem>
 						<SelectItem value="year">Year</SelectItem>
 					</SelectContent>
 				</Select>
 			</CardHeader>
 			<CardContent>
-				<ChartContainer config={chartConfig}>
+				<ChartContainer config={chartConfig} className="h-[300px] w-full">
 					<AreaChart
 						accessibilityLayer
-						data={chartData}
+						data={data.data?.transactions}
 						margin={{
 							left: 12,
 							right: 12,
@@ -71,53 +107,58 @@ export default function Statistics() {
 					>
 						<CartesianGrid vertical={false} />
 						<XAxis
-							dataKey="month"
+							dataKey="date"
 							tickLine={false}
 							axisLine={false}
 							tickMargin={8}
-							tickFormatter={value => value.slice(0, 3)}
+							tickFormatter={value =>
+								formatInTimeZone(value, timeZone, 'dd. MMM')
+							}
 						/>
-						<ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+						<ChartTooltip
+							cursor={false}
+							content={<ChartTooltipContent className="min-w-44" />}
+						/>
 						<defs>
-							<linearGradient id="fillDesktop" x1="0" y1="0" x2="0" y2="1">
+							<linearGradient id="fillExpense" x1="0" y1="0" x2="0" y2="1">
 								<stop
 									offset="5%"
-									stopColor="var(--color-desktop)"
+									stopColor="var(--color-total_expense)"
 									stopOpacity={0.8}
 								/>
 								<stop
 									offset="95%"
-									stopColor="var(--color-desktop)"
+									stopColor="var(--color-total_expense)"
 									stopOpacity={0.1}
 								/>
 							</linearGradient>
-							<linearGradient id="fillMobile" x1="0" y1="0" x2="0" y2="1">
+							<linearGradient id="fillIncome" x1="0" y1="0" x2="0" y2="1">
 								<stop
 									offset="5%"
-									stopColor="var(--color-mobile)"
+									stopColor="var(--color-total_income)"
 									stopOpacity={0.8}
 								/>
 								<stop
 									offset="95%"
-									stopColor="var(--color-mobile)"
+									stopColor="var(--color-total_income)"
 									stopOpacity={0.1}
 								/>
 							</linearGradient>
 						</defs>
 						<Area
-							dataKey="mobile"
-							type="natural"
-							fill="url(#fillMobile)"
+							dataKey="total_income"
+							type="linear"
+							fill="url(#fillIncome)"
 							fillOpacity={0.4}
-							stroke="var(--color-mobile)"
+							stroke="var(--color-total_income)"
 							stackId="a"
 						/>
 						<Area
-							dataKey="desktop"
-							type="natural"
-							fill="url(#fillDesktop)"
+							dataKey="total_expense"
+							type="linear"
+							fill="url(#fillExpense)"
 							fillOpacity={0.4}
-							stroke="var(--color-desktop)"
+							stroke="var(--color-total_expense)"
 							stackId="a"
 						/>
 					</AreaChart>
