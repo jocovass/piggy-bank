@@ -7,7 +7,7 @@ import {
 	twoFactorAuthType,
 	unverifiedsessionIdKey,
 	verifiedTimeKey,
-} from '~/app/routes/_dashboard+/settings+/two-factor-auth';
+} from '~/app/routes/_app+/settings+/two-factor-auth';
 import { requireUser } from '~/app/utils/auth.server';
 import { getDomainUrl } from '~/app/utils/misc';
 import { authSessionStorage } from '~/app/utils/session.server';

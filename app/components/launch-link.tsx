@@ -7,7 +7,7 @@ import {
 	type PlaidLinkOptionsWithLinkToken,
 	usePlaidLink,
 } from 'react-plaid-link';
-import { plaidOauthConfigKey } from '~/app/routes/_dashboard+/plaid-oauth';
+import { plaidOauthConfigKey } from '~/app/routes/_app+/plaid-oauth';
 import { type action as bankConnectionAction } from '~/app/routes/_resources+/bank-connection';
 import { type action as exchangeTokenAction } from '~/app/routes/_resources+/exchange-public-token';
 import { type action as generateLinkTokenAction } from '~/app/routes/_resources+/generate-link-token';

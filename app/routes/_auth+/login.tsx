@@ -55,7 +55,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	const { session, remember } = submission.value;
 
 	return handleNewSession({
-		redirectTo: '/overview',
+		redirectTo: '/dashboard',
 		remember,
 		request,
 		session,

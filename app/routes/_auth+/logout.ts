@@ -6,7 +6,7 @@ import { db } from '~/db/index.server';
 import { sessions } from '~/db/schema';
 
 export async function loader() {
-	return redirect('/overview');
+	return redirect('/dashboard');
 }
 
 export async function action({ request }: ActionFunctionArgs) {

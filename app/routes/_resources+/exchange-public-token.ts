@@ -181,5 +181,5 @@ export async function action({ request }: ActionFunctionArgs) {
 		});
 	});
 
-	return redirect('/overview');
+	return redirect('/dashboard');
 }

@@ -60,7 +60,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		 */
 		if (existingConnection.user.id === currentUser.id) {
 			return redirectWithToast(
-				'/overview',
+				'/dashboard',
 				{
 					title: 'Already connected',
 					description: `Your "${profile.firstName}" ${provider} account is already connected.`,
@@ -72,7 +72,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 			 * Provider is linked to another account
 			 */
 			return redirectWithToast(
-				'/overview',
+				'/dashboard',
 				{
 					title: 'Already connected',
 					description: `The "${profile.firstName}" ${provider} account is already connected to another account.`,
@@ -93,7 +93,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 		});
 
 		return redirectWithToast(
-			'/overview',
+			'/dashboard',
 			{
 				title: 'Connected',
 				description: `You ${profile.firstName} ${provider} account has been connected.`,

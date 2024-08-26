@@ -7,7 +7,7 @@ import {
 	twoFactorAuthType,
 	unverifiedsessionIdKey,
 	verifiedTimeKey,
-} from '~/app/routes/_dashboard+/settings+/two-factor-auth';
+} from '~/app/routes/_app+/settings+/two-factor-auth';
 import { sessionKey } from '~/app/utils/auth.server';
 import { combineResponseInit } from '~/app/utils/misc';
 import { authSessionStorage } from '~/app/utils/session.server';
@@ -21,7 +21,7 @@ export const rememberMeKey = 'remember';
 
 export async function handleNewSession(
 	{
-		redirectTo = '/overview',
+		redirectTo = '/dashboard',
 		remember = false,
 		request,
 		session,
@@ -73,7 +73,7 @@ export async function handleNewSession(
 		authSession.set(sessionKey, session.id);
 
 		throw redirect(
-			'/overview',
+			'/dashboard',
 			combineResponseInit(
 				{
 					headers: {
