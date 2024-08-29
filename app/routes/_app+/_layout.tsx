@@ -1,3 +1,4 @@
+import { PopoverContent } from '@radix-ui/react-popover';
 import {
 	type MetaFunction,
 	type LoaderFunctionArgs,
@@ -5,10 +6,19 @@ import {
 } from '@remix-run/node';
 import { NavLink, Outlet, useLoaderData } from '@remix-run/react';
 import ArrowRightRect from '~/app/components/icons/arrow-right-rect';
+import AvatarIcon from '~/app/components/icons/avatar';
+import ChevronDown from '~/app/components/icons/chevron-down';
 import CreditCard from '~/app/components/icons/credit-card';
 import RectangleGroup from '~/app/components/icons/rectangle-group';
 import Settings from '~/app/components/icons/settings';
 import Transaction from '~/app/components/icons/transaction';
+import {
+	Avatar,
+	AvatarImage,
+	AvatarFallback,
+} from '~/app/components/ui/avatar';
+import { Button } from '~/app/components/ui/button';
+import { PopoverTrigger, Popover } from '~/app/components/ui/popover';
 import { requireUser } from '~/app/utils/auth.server';
 import { cn } from '~/app/utils/misc';
 
@@ -26,7 +36,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function Layout() {
 	const data = useLoaderData<typeof loader>();
-	console.log(data);
 
 	return (
 		<div>
@@ -69,10 +78,16 @@ export default function Layout() {
 										</NavItem>
 									</li>
 									<li>
-										<NavItem to="/logout">
-											<ArrowRightRect className="size-5" />
-											Logout
-										</NavItem>
+										<form action="/logout" method="POST">
+											<Button
+												type="submit"
+												variant="ghost"
+												className="flex w-full items-center justify-start gap-x-2 p-2 leading-6 hover:bg-accent"
+											>
+												<ArrowRightRect className="size-5" />
+												Logout
+											</Button>
+										</form>
 									</li>
 								</ul>
 							</li>
@@ -82,7 +97,56 @@ export default function Layout() {
 			</div>
 
 			<div className="h-screen pl-72">
-				<div className="">Header</div>
+				<header className="sticky top-0 z-50 flex items-center justify-between bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+					<div />
+					<div>
+						<Popover>
+							<PopoverTrigger asChild>
+								<button
+									className="flex items-center gap-2 px-2"
+									aria-haspopup="menu"
+									aria-expanded="false"
+								>
+									<span className="sr-only">Open menu</span>
+									<Avatar className="h-7 w-7">
+										<AvatarImage
+											src="https://localhost:3000/avatar.png"
+											alt="Avatar"
+										/>
+										<AvatarFallback className="bg-transparent">
+											<AvatarIcon className="size-7 text-foreground/50" />
+										</AvatarFallback>
+									</Avatar>
+									<span className="flex items-center gap-2 text-xs" aria-hidden>
+										{data.user.firstName} {data.user.lastName}
+										<ChevronDown className="size-3" />
+									</span>
+								</button>
+							</PopoverTrigger>
+							<PopoverContent
+								align="end"
+								className="shadow-backkground w-[150px] rounded-md bg-background p-2 shadow-sm"
+							>
+								<NavItem className="mb-2 text-xs" to="/settings/profile">
+									<Settings className="size-5" />
+									Settings
+								</NavItem>
+								<form action="/logout" method="POST">
+									<Button
+										type="submit"
+										size="sm"
+										variant="ghost"
+										className="flex w-full items-center justify-start gap-x-2 p-2 text-xs hover:bg-accent"
+									>
+										<ArrowRightRect className="size-5" />
+										Logout
+									</Button>
+								</form>
+							</PopoverContent>
+						</Popover>
+					</div>
+				</header>
+
 				<main className="p-4">
 					<Outlet />
 				</main>
@@ -91,7 +155,15 @@ export default function Layout() {
 	);
 }
 
-function NavItem({ to, children }: { to: string; children: React.ReactNode }) {
+function NavItem({
+	to,
+	children,
+	className,
+}: {
+	to: string;
+	children: React.ReactNode;
+	className?: string;
+}) {
 	return (
 		<NavLink
 			to={to}
@@ -100,6 +172,7 @@ function NavItem({ to, children }: { to: string; children: React.ReactNode }) {
 					'flex items-center gap-x-2 rounded-sm p-2 text-sm leading-6 transition-colors hover:bg-accent',
 					isActive &&
 						'bg-foreground text-white hover:bg-foreground/90 dark:bg-muted dark:hover:bg-accent',
+					className,
 				)
 			}
 		>
