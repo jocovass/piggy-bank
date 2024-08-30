@@ -32,7 +32,7 @@ export default function BankConnections({ connections }: BankConnectionsProps) {
 	const hints = useHints();
 
 	return (
-		<Card>
+		<Card className="h-full max-h-[236px] overflow-y-auto">
 			<CardHeader className="flex-row items-center justify-between pb-0">
 				<CardTitle className="text-base">Accounts</CardTitle>
 				<AddBankAccount>

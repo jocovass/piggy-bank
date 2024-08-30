@@ -94,7 +94,7 @@ export default function CurrentMonthIncome() {
 			<CardContent className="flex items-center justify-between gap-2 p-1 pl-5">
 				<div className="flex flex-col gap-1">
 					<p className="text-xs text-muted-foreground">Current month income</p>
-					<p className="text-3xl font-bold">
+					<p className="text-2xl font-bold">
 						{formatCurrency(
 							Number(lastMonthIncomFetcher.data?.amount?.slice(1)) || 0,
 						)}
@@ -103,21 +103,21 @@ export default function CurrentMonthIncome() {
 
 				<ChartContainer
 					config={chartConfig}
-					className="min-h-[100px] max-w-[100px]"
+					className="min-h-[100px] max-w-[90px]"
 				>
 					<RadialBarChart
 						data={chartData}
 						startAngle={0}
 						endAngle={chartFillAmount}
-						innerRadius={37}
-						outerRadius={53}
+						innerRadius={32}
+						outerRadius={48}
 					>
 						<PolarGrid
 							gridType="circle"
 							radialLines={false}
 							stroke="none"
 							className="first:fill-muted last:fill-background"
-							polarRadius={[40, 33]}
+							polarRadius={[35, 28]}
 						/>
 						<RadialBar dataKey="amount" background cornerRadius={10} />
 						<PolarRadiusAxis tick={false} tickLine={false} axisLine={false}>

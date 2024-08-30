@@ -73,12 +73,12 @@ export default function TotalBalance({ connections }: TotalBalanceProps) {
 			<CardContent className="flex items-center justify-between gap-2 p-1 pl-5">
 				<div className="flex flex-col gap-1">
 					<p className="text-xs text-muted-foreground">Total balance</p>
-					<p className="text-3xl font-bold">{formatCurrency(totalBalance)}</p>
+					<p className="text-2xl font-bold">{formatCurrency(totalBalance)}</p>
 				</div>
 
 				<ChartContainer
 					config={chartConfig}
-					className="min-h-[100px] max-w-[100px]"
+					className="min-h-[100px] max-w-[90px]"
 				>
 					<PieChart>
 						<ChartTooltip
@@ -88,6 +88,7 @@ export default function TotalBalance({ connections }: TotalBalanceProps) {
 							data={chartData}
 							dataKey="amount"
 							nameKey="bank"
+							outerRadius={35}
 							innerRadius={29}
 							strokeWidth={5}
 						>
