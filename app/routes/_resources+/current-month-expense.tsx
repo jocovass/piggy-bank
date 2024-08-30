@@ -79,10 +79,10 @@ export default function CurrentMonthExpense() {
 
 	return (
 		<Card>
-			<CardContent className="flex items-center justify-between gap-2 px-5 py-2">
+			<CardContent className="flex h-[110px] items-center justify-between gap-2 px-5 py-2">
 				<div className="flex flex-col gap-1">
 					<p className="text-xs text-muted-foreground">Current month expense</p>
-					<p className="text-3xl font-bold">
+					<p className="text-2xl font-bold">
 						{formatCurrency(
 							// The last item in the array is the total of all the previous days
 							// include the current day
@@ -93,7 +93,7 @@ export default function CurrentMonthExpense() {
 
 				<ChartContainer
 					config={chartConfig}
-					className="min-h-[90px] max-w-[120px]"
+					className="min-h-[70px] max-w-[100px]"
 				>
 					<LineChart accessibilityLayer data={lastMonthExpense.data?.data}>
 						<ChartTooltip
