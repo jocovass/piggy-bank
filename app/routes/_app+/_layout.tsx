@@ -5,6 +5,7 @@ import {
 	json,
 } from '@remix-run/node';
 import { NavLink, Outlet, useLoaderData } from '@remix-run/react';
+import { useEffect, useState } from 'react';
 import ArrowRightRect from '~/app/components/icons/arrow-right-rect';
 import AvatarIcon from '~/app/components/icons/avatar';
 import ChevronDown from '~/app/components/icons/chevron-down';
@@ -36,10 +37,28 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function Layout() {
 	const data = useLoaderData<typeof loader>();
+	const [isMobile, setIsMobile] = useState(false);
+	const [isOpen, setIsOpen] = useState(false);
+
+	useEffect(() => {
+		const md = window.matchMedia('(min-width: 1024px)');
+
+		setIsMobile(!md.matches);
+
+		function handleMediaChange(e: MediaQueryListEvent) {
+			setIsMobile(!e.matches);
+			e.matches && setIsOpen(false);
+		}
+
+		md.addEventListener('change', handleMediaChange);
+		return () => {
+			md.removeEventListener('change', handleMediaChange);
+		};
+	}, []);
 
 	return (
 		<div>
-			<div className="fixed bottom-0 left-0 top-0 z-50 w-72 overflow-y-auto border-r border-border">
+			<div className="fixed bottom-0 left-0 top-0 z-50 hidden w-72 overflow-y-auto border-r border-border lg:block">
 				<div className="flex h-full flex-col gap-y-5 px-6 pb-4">
 					<div className="flex h-16 items-center">
 						<p className="font-bold">Piggy-Bank</p>
@@ -96,8 +115,17 @@ export default function Layout() {
 				</div>
 			</div>
 
-			<div className="h-screen pl-72">
+			<div className="h-screen lg:pl-72">
 				<header className="sticky top-0 z-50 flex items-center justify-between bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+					{isMobile && (
+						<Button
+							aria-haspopup="menu"
+							aria-expanded="false"
+							className="flex items-center gap-2 px-2"
+						>
+							<span className="sr-only">Open mobile navigation</span>=
+						</Button>
+					)}
 					<div />
 					<div>
 						<Popover>
@@ -145,11 +173,72 @@ export default function Layout() {
 							</PopoverContent>
 						</Popover>
 					</div>
+
+					<MobileNavigation />
 				</header>
 
 				<main className="p-4">
 					<Outlet />
 				</main>
+			</div>
+		</div>
+	);
+}
+
+function MobileNavigation() {
+	return (
+		<div className="fixed left-0 right-0 top-0 h-screen bg-red-500 px-6 pb-4">
+			<div className="w-[360px]">
+				<div className="w-72">
+					<nav className="flex flex-1 flex-col">
+						<ul className="flex flex-1 flex-col gap-y-7">
+							<li>
+								<ul>
+									<li className="mb-1.5">
+										<NavItem to="/dashboard">
+											<RectangleGroup className="size-5" />
+											Dashboard
+										</NavItem>
+									</li>
+									<li className="mb-1.5">
+										<NavItem to="/transactions">
+											<Transaction className="size-5" />
+											Transactions
+										</NavItem>
+									</li>
+									<li>
+										<NavItem to="/accounts">
+											<CreditCard className="size-5" />
+											Accounts
+										</NavItem>
+									</li>
+								</ul>
+							</li>
+							<li className="mt-auto">
+								<ul>
+									<li className="mb-1.5">
+										<NavItem to="/settings/profile">
+											<Settings className="size-5" />
+											Settings
+										</NavItem>
+									</li>
+									<li>
+										<form action="/logout" method="POST">
+											<Button
+												type="submit"
+												variant="ghost"
+												className="flex w-full items-center justify-start gap-x-2 p-2 leading-6 hover:bg-accent"
+											>
+												<ArrowRightRect className="size-5" />
+												Logout
+											</Button>
+										</form>
+									</li>
+								</ul>
+							</li>
+						</ul>
+					</nav>
+				</div>
 			</div>
 		</div>
 	);
