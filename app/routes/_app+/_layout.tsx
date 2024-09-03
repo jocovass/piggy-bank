@@ -8,11 +8,13 @@ import { NavLink, Outlet, useLoaderData } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import ArrowRightRect from '~/app/components/icons/arrow-right-rect';
 import AvatarIcon from '~/app/components/icons/avatar';
+import BarsLeft from '~/app/components/icons/bars-left';
 import ChevronDown from '~/app/components/icons/chevron-down';
 import CreditCard from '~/app/components/icons/credit-card';
 import RectangleGroup from '~/app/components/icons/rectangle-group';
 import Settings from '~/app/components/icons/settings';
 import Transaction from '~/app/components/icons/transaction';
+import XMark from '~/app/components/icons/x-mark';
 import {
 	Avatar,
 	AvatarImage,
@@ -38,18 +40,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export default function Layout() {
 	const data = useLoaderData<typeof loader>();
 	const [isMobile, setIsMobile] = useState(false);
-	const [isOpen, setIsOpen] = useState(false);
 
 	useEffect(() => {
 		const md = window.matchMedia('(min-width: 1024px)');
-
 		setIsMobile(!md.matches);
-
 		function handleMediaChange(e: MediaQueryListEvent) {
 			setIsMobile(!e.matches);
-			e.matches && setIsOpen(false);
 		}
-
 		md.addEventListener('change', handleMediaChange);
 		return () => {
 			md.removeEventListener('change', handleMediaChange);
@@ -117,21 +114,13 @@ export default function Layout() {
 
 			<div className="h-screen lg:pl-72">
 				<header className="sticky top-0 z-50 flex items-center justify-between bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-					{isMobile && (
-						<Button
-							aria-haspopup="menu"
-							aria-expanded="false"
-							className="flex items-center gap-2 px-2"
-						>
-							<span className="sr-only">Open mobile navigation</span>=
-						</Button>
-					)}
+					{isMobile && <MobileNavigation />}
 					<div />
 					<div>
 						<Popover>
 							<PopoverTrigger asChild>
 								<button
-									className="flex items-center gap-2 px-2"
+									className="flex items-center gap-2 px-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
 									aria-haspopup="menu"
 									aria-expanded="false"
 								>
@@ -173,8 +162,6 @@ export default function Layout() {
 							</PopoverContent>
 						</Popover>
 					</div>
-
-					<MobileNavigation />
 				</header>
 
 				<main className="p-4">
@@ -186,10 +173,40 @@ export default function Layout() {
 }
 
 function MobileNavigation() {
+	const [isOpen, setIsOpen] = useState(false);
+
 	return (
-		<div className="fixed left-0 right-0 top-0 h-screen bg-red-500 px-6 pb-4">
-			<div className="w-[360px]">
-				<div className="w-72">
+		<>
+			<Button
+				variant="ghost"
+				size="icon"
+				className="size-8 rounded-full"
+				onClick={() => setIsOpen(prev => !prev)}
+			>
+				<span className="sr-only">Open mobile navigation</span>
+				<BarsLeft className="size-5" />
+			</Button>
+
+			<div
+				className={`fixed left-0 right-0 top-0 z-50 h-screen bg-black/80 transition-opacity ${isOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'}`}
+			>
+				<div
+					className={`flex h-full max-w-72 flex-col gap-y-5 bg-background px-6 pb-4 shadow-md transition-transform ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
+				>
+					<div className="flex h-16 items-center justify-between">
+						<p className="font-bold">Piggy-Bank</p>
+
+						<Button
+							size="icon"
+							variant="ghost"
+							className="size-8 rounded-full"
+							onClick={() => setIsOpen(false)}
+						>
+							<span className="sr-only">Close mobile navigation</span>
+							<XMark className="size-5" />
+						</Button>
+					</div>
+
 					<nav className="flex flex-1 flex-col">
 						<ul className="flex flex-1 flex-col gap-y-7">
 							<li>
@@ -240,7 +257,7 @@ function MobileNavigation() {
 					</nav>
 				</div>
 			</div>
-		</div>
+		</>
 	);
 }
 
@@ -258,7 +275,7 @@ function NavItem({
 			to={to}
 			className={({ isActive }) =>
 				cn(
-					'flex items-center gap-x-2 rounded-sm p-2 text-sm leading-6 transition-colors hover:bg-accent',
+					'flex items-center gap-x-2 rounded-sm p-2 text-sm leading-6 ring-offset-background transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
 					isActive &&
 						'bg-foreground text-white hover:bg-foreground/90 dark:bg-muted dark:hover:bg-accent',
 					className,
