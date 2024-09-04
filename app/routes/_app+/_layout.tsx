@@ -1,4 +1,3 @@
-import { PopoverContent } from '@radix-ui/react-popover';
 import {
 	type MetaFunction,
 	type LoaderFunctionArgs,
@@ -21,7 +20,11 @@ import {
 	AvatarFallback,
 } from '~/app/components/ui/avatar';
 import { Button } from '~/app/components/ui/button';
-import { PopoverTrigger, Popover } from '~/app/components/ui/popover';
+import {
+	PopoverContent,
+	PopoverTrigger,
+	Popover,
+} from '~/app/components/ui/popover';
 import { requireUser } from '~/app/utils/auth.server';
 import { cn } from '~/app/utils/misc';
 
