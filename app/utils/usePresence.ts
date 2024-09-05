@@ -2,13 +2,17 @@ import {
 	useCallback,
 	useEffect,
 	useLayoutEffect,
+	useReducer,
 	useRef,
 	useState,
 } from 'react';
 import { flushSync } from 'react-dom';
 
+/**
+ * This hook was taken from https://github.com/radix-ui/primitives/blob/main/packages/react/presence/src/Presence.tsx#L33
+ */
 export function usePresence(present: boolean) {
-	const [node, setNode] = useState<HTMLElement>();
+	const [node, setNode] = useState<HTMLElement | null>(null);
 	const stylesRef = useRef<CSSStyleDeclaration>({} as any);
 	const prevPresentRef = useRef(present);
 	const prevAnimationNameRef = useRef<string>('none');
@@ -26,11 +30,12 @@ export function usePresence(present: boolean) {
 			MOUNT: 'mounted',
 		},
 	});
-
+	console.log('initial state', initialState);
 	useEffect(() => {
 		const currentAnimationName = getAnimationName(stylesRef.current);
 		prevAnimationNameRef.current =
 			state === 'mounted' ? currentAnimationName : 'none';
+		console.log('useffect');
 	}, [state]);
 
 	useLayoutEffect(() => {
@@ -41,6 +46,7 @@ export function usePresence(present: boolean) {
 		if (hasPresentChanged) {
 			const prevAnimationName = prevAnimationNameRef.current;
 			const currentAnimationName = getAnimationName(styles);
+			console.log('current animation name', currentAnimationName);
 
 			if (present) {
 				send('MOUNT');
@@ -113,7 +119,7 @@ export function usePresence(present: boolean) {
 
 	return {
 		isPresent: ['mounted', 'unmountSuspended'].includes(state),
-		ref: useCallback((node: HTMLElement) => {
+		ref: useCallback((node: HTMLElement | null) => {
 			if (node) stylesRef.current = getComputedStyle(node);
 			setNode(node);
 		}, []),
@@ -122,4 +128,28 @@ export function usePresence(present: boolean) {
 
 function getAnimationName(styles?: CSSStyleDeclaration) {
 	return styles?.animationName || 'none';
+}
+
+type Machine<S> = { [k: string]: { [k: string]: S } };
+type MachineState<T> = keyof T;
+type MachineEvent<T> = keyof UnionToIntersection<T[keyof T]>;
+
+// 🤯 https://fettblog.eu/typescript-union-to-intersection/
+type UnionToIntersection<T> = (T extends any ? (x: T) => any : never) extends (
+	x: infer R,
+) => any
+	? R
+	: never;
+
+export function useStateMachine<M>(
+	initialState: MachineState<M>,
+	machine: M & Machine<MachineState<M>>,
+) {
+	return useReducer(
+		(state: MachineState<M>, event: MachineEvent<M>): MachineState<M> => {
+			const nextState = (machine[state] as any)[event];
+			return nextState ?? state;
+		},
+		initialState,
+	);
 }

@@ -27,6 +27,7 @@ import {
 } from '~/app/components/ui/popover';
 import { requireUser } from '~/app/utils/auth.server';
 import { cn } from '~/app/utils/misc';
+import { usePresence } from '~/app/utils/usePresence';
 
 export const meta: MetaFunction = () => {
 	return [
@@ -177,6 +178,9 @@ export default function Layout() {
 
 function MobileNavigation() {
 	const [isOpen, setIsOpen] = useState(false);
+	const { isPresent, ref } = usePresence(isOpen);
+
+	console.log('isPresent', isPresent);
 
 	return (
 		<>
@@ -190,76 +194,80 @@ function MobileNavigation() {
 				<BarsLeft className="size-5" />
 			</Button>
 
-			<div
-				className={`fixed left-0 right-0 top-0 z-50 h-screen bg-black/80 transition-opacity ${isOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'}`}
-			>
+			{isPresent && (
 				<div
-					className={`flex h-full max-w-72 flex-col gap-y-5 bg-background px-6 pb-4 shadow-md transition-transform ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
+					className={`fixed left-0 right-0 top-0 z-50 h-screen bg-black/80 ${isOpen ? 'animate-in fade-in-25' : 'animate-out fade-out'}`}
+					onClick={() => setIsOpen(false)}
 				>
-					<div className="flex h-16 items-center justify-between">
-						<p className="font-bold">Piggy-Bank</p>
+					<div
+						ref={ref}
+						className={`flex h-full max-w-72 flex-col gap-y-5 bg-background px-6 pb-4 shadow-md transition-transform ${isOpen ? 'animate-in slide-in-from-left' : 'animate-out slide-out-to-left'}`}
+					>
+						<div className="flex h-16 items-center justify-between">
+							<p className="font-bold">Piggy-Bank</p>
 
-						<Button
-							size="icon"
-							variant="ghost"
-							className="size-8 rounded-full"
-							onClick={() => setIsOpen(false)}
-						>
-							<span className="sr-only">Close mobile navigation</span>
-							<XMark className="size-5" />
-						</Button>
+							<Button
+								size="icon"
+								variant="ghost"
+								className="size-8 rounded-full"
+								onClick={() => setIsOpen(false)}
+							>
+								<span className="sr-only">Close mobile navigation</span>
+								<XMark className="size-5" />
+							</Button>
+						</div>
+
+						<nav className="flex flex-1 flex-col">
+							<ul className="flex flex-1 flex-col gap-y-7">
+								<li>
+									<ul>
+										<li className="mb-1.5">
+											<NavItem to="/dashboard">
+												<RectangleGroup className="size-5" />
+												Dashboard
+											</NavItem>
+										</li>
+										<li className="mb-1.5">
+											<NavItem to="/transactions">
+												<Transaction className="size-5" />
+												Transactions
+											</NavItem>
+										</li>
+										<li>
+											<NavItem to="/accounts">
+												<CreditCard className="size-5" />
+												Accounts
+											</NavItem>
+										</li>
+									</ul>
+								</li>
+								<li className="mt-auto">
+									<ul>
+										<li className="mb-1.5">
+											<NavItem to="/settings/profile">
+												<Settings className="size-5" />
+												Settings
+											</NavItem>
+										</li>
+										<li>
+											<form action="/logout" method="POST">
+												<Button
+													type="submit"
+													variant="ghost"
+													className="flex w-full items-center justify-start gap-x-2 p-2 leading-6 hover:bg-accent"
+												>
+													<ArrowRightRect className="size-5" />
+													Logout
+												</Button>
+											</form>
+										</li>
+									</ul>
+								</li>
+							</ul>
+						</nav>
 					</div>
-
-					<nav className="flex flex-1 flex-col">
-						<ul className="flex flex-1 flex-col gap-y-7">
-							<li>
-								<ul>
-									<li className="mb-1.5">
-										<NavItem to="/dashboard">
-											<RectangleGroup className="size-5" />
-											Dashboard
-										</NavItem>
-									</li>
-									<li className="mb-1.5">
-										<NavItem to="/transactions">
-											<Transaction className="size-5" />
-											Transactions
-										</NavItem>
-									</li>
-									<li>
-										<NavItem to="/accounts">
-											<CreditCard className="size-5" />
-											Accounts
-										</NavItem>
-									</li>
-								</ul>
-							</li>
-							<li className="mt-auto">
-								<ul>
-									<li className="mb-1.5">
-										<NavItem to="/settings/profile">
-											<Settings className="size-5" />
-											Settings
-										</NavItem>
-									</li>
-									<li>
-										<form action="/logout" method="POST">
-											<Button
-												type="submit"
-												variant="ghost"
-												className="flex w-full items-center justify-start gap-x-2 p-2 leading-6 hover:bg-accent"
-											>
-												<ArrowRightRect className="size-5" />
-												Logout
-											</Button>
-										</form>
-									</li>
-								</ul>
-							</li>
-						</ul>
-					</nav>
 				</div>
-			</div>
+			)}
 		</>
 	);
 }
