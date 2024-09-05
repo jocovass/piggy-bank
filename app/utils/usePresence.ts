@@ -9,7 +9,8 @@ import {
 import { flushSync } from 'react-dom';
 
 /**
- * This hook was taken from https://github.com/radix-ui/primitives/blob/main/packages/react/presence/src/Presence.tsx#L33
+ * This hook was taken from:
+ * https://github.com/radix-ui/primitives/blob/main/packages/react/presence/src/Presence.tsx#L33
  */
 export function usePresence(present: boolean) {
 	const [node, setNode] = useState<HTMLElement | null>(null);
@@ -30,12 +31,11 @@ export function usePresence(present: boolean) {
 			MOUNT: 'mounted',
 		},
 	});
-	console.log('initial state', initialState);
+
 	useEffect(() => {
 		const currentAnimationName = getAnimationName(stylesRef.current);
 		prevAnimationNameRef.current =
 			state === 'mounted' ? currentAnimationName : 'none';
-		console.log('useffect');
 	}, [state]);
 
 	useLayoutEffect(() => {
@@ -46,7 +46,6 @@ export function usePresence(present: boolean) {
 		if (hasPresentChanged) {
 			const prevAnimationName = prevAnimationNameRef.current;
 			const currentAnimationName = getAnimationName(styles);
-			console.log('current animation name', currentAnimationName);
 
 			if (present) {
 				send('MOUNT');

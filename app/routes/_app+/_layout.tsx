@@ -3,17 +3,16 @@ import {
 	type LoaderFunctionArgs,
 	json,
 } from '@remix-run/node';
-import { NavLink, Outlet, useLoaderData } from '@remix-run/react';
+import { Outlet, useLoaderData } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import ArrowRightRect from '~/app/components/icons/arrow-right-rect';
 import AvatarIcon from '~/app/components/icons/avatar';
 import BarsLeft from '~/app/components/icons/bars-left';
 import ChevronDown from '~/app/components/icons/chevron-down';
-import CreditCard from '~/app/components/icons/credit-card';
-import RectangleGroup from '~/app/components/icons/rectangle-group';
 import Settings from '~/app/components/icons/settings';
-import Transaction from '~/app/components/icons/transaction';
 import XMark from '~/app/components/icons/x-mark';
+import Nav from '~/app/components/Nav';
+import NavItem from '~/app/components/NavItem';
 import {
 	Avatar,
 	AvatarImage,
@@ -26,7 +25,6 @@ import {
 	Popover,
 } from '~/app/components/ui/popover';
 import { requireUser } from '~/app/utils/auth.server';
-import { cn } from '~/app/utils/misc';
 import { usePresence } from '~/app/utils/usePresence';
 
 export const meta: MetaFunction = () => {
@@ -64,62 +62,16 @@ export default function Layout() {
 					<div className="flex h-16 items-center">
 						<p className="font-bold">Piggy-Bank</p>
 					</div>
-
-					<nav className="flex flex-1 flex-col">
-						<ul className="flex flex-1 flex-col gap-y-7">
-							<li>
-								<ul>
-									<li className="mb-1.5">
-										<NavItem to="/dashboard">
-											<RectangleGroup className="size-5" />
-											Dashboard
-										</NavItem>
-									</li>
-									<li className="mb-1.5">
-										<NavItem to="/transactions">
-											<Transaction className="size-5" />
-											Transactions
-										</NavItem>
-									</li>
-									<li>
-										<NavItem to="/accounts">
-											<CreditCard className="size-5" />
-											Accounts
-										</NavItem>
-									</li>
-								</ul>
-							</li>
-							<li className="mt-auto">
-								<ul>
-									<li className="mb-1.5">
-										<NavItem to="/settings/profile">
-											<Settings className="size-5" />
-											Settings
-										</NavItem>
-									</li>
-									<li>
-										<form action="/logout" method="POST">
-											<Button
-												type="submit"
-												variant="ghost"
-												className="flex w-full items-center justify-start gap-x-2 p-2 leading-6 hover:bg-accent"
-											>
-												<ArrowRightRect className="size-5" />
-												Logout
-											</Button>
-										</form>
-									</li>
-								</ul>
-							</li>
-						</ul>
-					</nav>
+					<Nav />
 				</div>
 			</div>
 
 			<div className="h-screen lg:pl-72">
 				<header className="sticky top-0 z-50 flex items-center justify-between bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60">
 					{isMobile && <MobileNavigation />}
+
 					<div />
+
 					<div>
 						<Popover>
 							<PopoverTrigger asChild>
@@ -180,8 +132,6 @@ function MobileNavigation() {
 	const [isOpen, setIsOpen] = useState(false);
 	const { isPresent, ref } = usePresence(isOpen);
 
-	console.log('isPresent', isPresent);
-
 	return (
 		<>
 			<Button
@@ -217,83 +167,10 @@ function MobileNavigation() {
 							</Button>
 						</div>
 
-						<nav className="flex flex-1 flex-col">
-							<ul className="flex flex-1 flex-col gap-y-7">
-								<li>
-									<ul>
-										<li className="mb-1.5">
-											<NavItem to="/dashboard">
-												<RectangleGroup className="size-5" />
-												Dashboard
-											</NavItem>
-										</li>
-										<li className="mb-1.5">
-											<NavItem to="/transactions">
-												<Transaction className="size-5" />
-												Transactions
-											</NavItem>
-										</li>
-										<li>
-											<NavItem to="/accounts">
-												<CreditCard className="size-5" />
-												Accounts
-											</NavItem>
-										</li>
-									</ul>
-								</li>
-								<li className="mt-auto">
-									<ul>
-										<li className="mb-1.5">
-											<NavItem to="/settings/profile">
-												<Settings className="size-5" />
-												Settings
-											</NavItem>
-										</li>
-										<li>
-											<form action="/logout" method="POST">
-												<Button
-													type="submit"
-													variant="ghost"
-													className="flex w-full items-center justify-start gap-x-2 p-2 leading-6 hover:bg-accent"
-												>
-													<ArrowRightRect className="size-5" />
-													Logout
-												</Button>
-											</form>
-										</li>
-									</ul>
-								</li>
-							</ul>
-						</nav>
+						<Nav />
 					</div>
 				</div>
 			)}
 		</>
-	);
-}
-
-function NavItem({
-	to,
-	children,
-	className,
-}: {
-	to: string;
-	children: React.ReactNode;
-	className?: string;
-}) {
-	return (
-		<NavLink
-			to={to}
-			className={({ isActive }) =>
-				cn(
-					'flex items-center gap-x-2 rounded-sm p-2 text-sm leading-6 ring-offset-background transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-					isActive &&
-						'bg-foreground text-white hover:bg-foreground/90 dark:bg-muted dark:hover:bg-accent',
-					className,
-				)
-			}
-		>
-			{children}
-		</NavLink>
 	);
 }
