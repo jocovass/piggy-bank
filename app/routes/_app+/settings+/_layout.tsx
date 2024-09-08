@@ -1,26 +1,21 @@
-import { Form, NavLink, Outlet } from '@remix-run/react';
-import { Button } from '~/app/components/ui/button';
+import { Outlet } from '@remix-run/react';
+import NavItem from '~/app/components/nav-item';
 
 export default function SettingsLayout() {
 	return (
-		<div>
-			<div>
-				<p>Settings</p>
-				<nav className="flex flex-col">
-					<NavLink to="profile">Profile</NavLink>
-					<NavLink to="email">Change email</NavLink>
-					<NavLink to="password">Change password</NavLink>
-					<Form method="POST" action="/logout">
-						<Button variant="link" type="submit">
-							Logout
-						</Button>
-					</Form>
+		<div className="max-w-2xl px-2">
+			<div className="mb-10">
+				<h2 className="mb-4 text-2xl font-bold">Settings</h2>
+				<nav className="flex items-center gap-x-2">
+					<NavItem to="profile" className="px-7 py-1">
+						Profile
+					</NavItem>
+					<NavItem to="email">Change email</NavItem>
+					<NavItem to="password">Change password</NavItem>
 				</nav>
 			</div>
 
-			<div className="h-screen p-2">
-				<Outlet />
-			</div>
+			<Outlet />
 		</div>
 	);
 }
