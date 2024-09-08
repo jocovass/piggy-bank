@@ -69,8 +69,6 @@ export default function SettingsProfile() {
 		shouldRevalidate: 'onInput',
 	});
 	const isPending = useDelayedIsPending({ formMethod: 'POST' });
-	console.log(isPending);
-
 	const disableSaveBtn = !fields.firstName.value || !fields.lastName.value;
 
 	return (
