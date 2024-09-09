@@ -3,7 +3,7 @@ import CreditCard from '~/app/components/icons/credit-card';
 import RectangleGroup from '~/app/components/icons/rectangle-group';
 import Settings from '~/app/components/icons/settings';
 import Transaction from '~/app/components/icons/transaction';
-import NavItem from './NavItem';
+import NavItem from './nav-item';
 import { Button } from './ui/button';
 
 export default function Nav() {

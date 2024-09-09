@@ -503,6 +503,7 @@ export const transactionRelations = relations(transactions, ({ one }) => ({
 export const selectUserSchema = createSelectSchema(users);
 export const insertUserChema = createInsertSchema(users);
 export type User = z.infer<typeof selectUserSchema>;
+export type InsertUser = z.infer<typeof insertUserChema>;
 
 /**
  * Password types

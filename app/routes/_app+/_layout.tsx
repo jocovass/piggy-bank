@@ -11,8 +11,8 @@ import BarsLeft from '~/app/components/icons/bars-left';
 import ChevronDown from '~/app/components/icons/chevron-down';
 import Settings from '~/app/components/icons/settings';
 import XMark from '~/app/components/icons/x-mark';
-import Nav from '~/app/components/Nav';
-import NavItem from '~/app/components/NavItem';
+import Nav from '~/app/components/nav';
+import NavItem from '~/app/components/nav-item';
 import {
 	Avatar,
 	AvatarImage,

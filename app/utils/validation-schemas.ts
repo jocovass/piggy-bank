@@ -11,14 +11,13 @@ export const PasswordSchema = z
 	.regex(/[0-9]/, 'Must contain number')
 	.regex(/[^a-z0-9\s]/i, 'Must contain special character');
 
+export const NameSchema = z.object({
+	firstName: z.string().min(3, 'Must be at least 3 charcter'),
+	lastName: z.string().min(3, 'Must be at least 3 charcter'),
+});
+
 export const OnboardingSchema = z
 	.object({
-		firstName: z
-			.string({ required_error: 'First name is required' })
-			.min(3, 'Must be at least 3 charcter'),
-		lastName: z
-			.string({ required_error: 'Last name is required' })
-			.min(3, 'Must be at least 3 charcter'),
 		password: PasswordSchema,
 		confirmPassword: z.string({
 			required_error: 'Confirm passowrd is required',
@@ -26,6 +25,7 @@ export const OnboardingSchema = z
 		remember: RememberSchema,
 		redirectTo: RedirectSchema,
 	})
+	.merge(NameSchema)
 	.superRefine(({ confirmPassword, password }, ctx) => {
 		if (confirmPassword !== password) {
 			ctx.addIssue({

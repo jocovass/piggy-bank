@@ -22,7 +22,9 @@ export function Field({
 		<div className={className}>
 			<Label htmlFor={id} {...labelProps} />
 			<Input id={id} {...inputProps} />
-			<div className="min-h-[32px] px-4 pb-3 pt-1">{errors?.toString()}</div>
+			<div className="min-h-[32px] px-1 pb-3 pt-1 text-xs">
+				{errors?.toString()}
+			</div>
 		</div>
 	);
 }
