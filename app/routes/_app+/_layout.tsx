@@ -13,6 +13,7 @@ import Settings from '~/app/components/icons/settings';
 import XMark from '~/app/components/icons/x-mark';
 import Nav from '~/app/components/nav';
 import NavItem from '~/app/components/nav-item';
+import ThemeSwitch from '~/app/components/theme-switch';
 import {
 	Avatar,
 	AvatarImage,
@@ -24,6 +25,7 @@ import {
 	PopoverTrigger,
 	Popover,
 } from '~/app/components/ui/popover';
+import { Separator } from '~/app/components/ui/separator';
 import { requireUser } from '~/app/utils/auth.server';
 import { usePresence } from '~/app/utils/usePresence';
 
@@ -72,7 +74,9 @@ export default function Layout() {
 
 					<div />
 
-					<div>
+					<div className="flex items-center gap-2">
+						<ThemeSwitch />
+						<Separator orientation="vertical" className="h-6" />
 						<Popover>
 							<PopoverTrigger asChild>
 								<button
