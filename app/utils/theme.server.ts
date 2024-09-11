@@ -6,6 +6,7 @@ export const themeStorage = createCookieSessionStorage({
 		path: '/',
 		httpOnly: false,
 		sameSite: 'lax',
+		secrets: ['theme-secret'],
 		secure: process.env.NODE_ENV === 'production',
 	},
 });

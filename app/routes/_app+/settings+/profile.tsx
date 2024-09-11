@@ -4,12 +4,20 @@ import { type ActionFunctionArgs, json } from '@remix-run/node';
 import { Form, useActionData } from '@remix-run/react';
 import { z } from 'zod';
 import { Field } from '~/app/components/forms';
+import AvatarIcon from '~/app/components/icons/avatar';
 import Spinner from '~/app/components/icons/spinner';
+import {
+	Avatar,
+	AvatarImage,
+	AvatarFallback,
+} from '~/app/components/ui/avatar';
 import { Button } from '~/app/components/ui/button';
+import Camera from '~/app/components/ui/camera';
 import { updateUser } from '~/app/data-access/users';
 import { requireUser } from '~/app/utils/auth.server';
 import { useDelayedIsPending } from '~/app/utils/misc';
 import { createToastHeader } from '~/app/utils/toast.server';
+import { useUser } from '~/app/utils/user';
 import { NameSchema } from '~/app/utils/validation-schemas';
 
 const schema = z
@@ -58,6 +66,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export default function SettingsProfile() {
 	const profileSettingsFetcher = useActionData<typeof action>();
+	const user = useUser();
 	const [form, fields] = useForm({
 		id: 'profile-settings-form',
 		constraint: getZodConstraint(NameSchema),
@@ -73,8 +82,48 @@ export default function SettingsProfile() {
 
 	return (
 		<div>
-			<div className="mb-8 h-28 w-28 rounded-full bg-foreground/10 p-2 ring-offset-background">
-				<p className="sr-only">Placeholder for profile image</p>
+			<div className="relative mb-8 inline-block">
+				<Avatar className="h-36 w-36">
+					<AvatarImage
+						src={'https://loremflickr.com/320/240/cat'}
+						alt={user.firstName}
+					/>
+					<AvatarFallback className="">
+						<AvatarIcon className="size-28 text-foreground/10" />
+					</AvatarFallback>
+				</Avatar>
+
+				<div className="absolute bottom-0 right-0">
+					<input
+						type="file"
+						className="peer sr-only"
+						id="file-upload"
+						accept="image/*"
+						required
+					/>
+
+					<Button
+						asChild
+						className="cursor-pointer rounded-full peer-valid:hidden"
+						size="icon"
+						variant="outline"
+					>
+						<label htmlFor="file-upload">
+							<Camera className="size-5 text-muted-foreground" />
+						</label>
+					</Button>
+
+					<Button
+						asChild
+						className="cursor-pointer rounded-full peer-invalid:hidden"
+						size="icon"
+						variant="destructive"
+					>
+						<label htmlFor="file-upload">
+							<Camera className="size-5 text-muted-foreground" />
+						</label>
+					</Button>
+				</div>
 			</div>
 
 			<Form method="POST" {...getFormProps(form)}>
