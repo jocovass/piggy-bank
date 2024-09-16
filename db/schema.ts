@@ -17,57 +17,21 @@ import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { type z } from 'zod';
 import { type DateToDateString } from '~/app/utils/type-helpers';
 
-const bytea = customType<{
-	data: string | null;
+export const bytea = customType<{
+	data: Buffer | null;
 	notNull: false;
 	default: true;
 }>({
 	dataType() {
 		return 'bytea';
 	},
-
-	/**
-	 * Convert input data to PostgreSQL format (Buffer)
-	 */
 	toDriver(val) {
-		if (val === null) return null; // Handle null cases
-
-		/**
-		 * Remove the "0x" prefix if it's a hex value
-		 */
-		if (val.startsWith('0x')) {
-			const hexVal = val.slice(2);
-			return Buffer.from(hexVal, 'hex');
-		}
-
-		/**
-		 * If the value looks like base64, handle it as such
-		 */
-		const isBase64 = /^[A-Za-z0-9+/]+={0,2}$/.test(val);
-		if (isBase64) {
-			return Buffer.from(val, 'base64');
-		}
-
-		/**
-		 * Default to assuming the input is a hex string if no other format is detected
-		 */
-		return Buffer.from(val, 'hex');
+		return val;
 	},
-
-	/**
-	 * Convert data from PostgreSQL (Buffer) to the output format
-	 */
 	fromDriver(val) {
-		if (!val) return null;
+		if (!(val instanceof Buffer)) return null;
 
-		/**
-		 * Convert Buffer to base64
-		 */
-		if (val instanceof Buffer) {
-			return val.toString('base64');
-		}
-
-		return null;
+		return val;
 	},
 });
 
@@ -77,7 +41,7 @@ export const users = pgTable('users', {
 		.notNull()
 		.$defaultFn(() => cuid()),
 	email: text('email').notNull().unique(),
-	avatar: bytea('avatar').default(null),
+	avatar: text('avatar').default(''),
 	firstName: text('firstName').notNull(),
 	lastName: text('lastName').notNull(),
 	createdAt: timestamp('createdAt', { withTimezone: true })

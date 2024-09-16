@@ -28,6 +28,7 @@ import {
 import { Separator } from '~/app/components/ui/separator';
 import { requireUser } from '~/app/utils/auth.server';
 import { usePresence } from '~/app/utils/usePresence';
+import { useUser } from '~/app/utils/user';
 
 export const meta: MetaFunction = () => {
 	return [
@@ -43,6 +44,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function Layout() {
 	const data = useLoaderData<typeof loader>();
+	const user = useUser();
 	const [isMobile, setIsMobile] = useState(false);
 
 	useEffect(() => {
@@ -87,7 +89,8 @@ export default function Layout() {
 									<span className="sr-only">Open menu</span>
 									<Avatar className="h-7 w-7">
 										<AvatarImage
-											src="https://localhost:3000/avatar.png"
+											className="object-cover"
+											src={`data:image/jpeg;base64,${user.avatar}`}
 											alt="Avatar"
 										/>
 										<AvatarFallback className="bg-transparent">

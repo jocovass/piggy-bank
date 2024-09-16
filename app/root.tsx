@@ -68,7 +68,6 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const user = await getUserFromSession(request);
-	console.log(user);
 	const { toast, toastHeader } = await getToastFromRequest(request);
 	const theme = await getTheme(request);
 
