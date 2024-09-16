@@ -3,6 +3,7 @@ import { createId as cuid } from '@paralleldrive/cuid2';
 import { relations } from 'drizzle-orm';
 import {
 	boolean,
+	customType,
 	decimal,
 	index,
 	integer,
@@ -16,12 +17,31 @@ import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { type z } from 'zod';
 import { type DateToDateString } from '~/app/utils/type-helpers';
 
+export const bytea = customType<{
+	data: Buffer | null;
+	notNull: false;
+	default: true;
+}>({
+	dataType() {
+		return 'bytea';
+	},
+	toDriver(val) {
+		return val;
+	},
+	fromDriver(val) {
+		if (!(val instanceof Buffer)) return null;
+
+		return val;
+	},
+});
+
 export const users = pgTable('users', {
 	id: varchar('id', { length: 25 })
 		.primaryKey()
 		.notNull()
 		.$defaultFn(() => cuid()),
 	email: text('email').notNull().unique(),
+	avatar: text('avatar').default(''),
 	firstName: text('firstName').notNull(),
 	lastName: text('lastName').notNull(),
 	createdAt: timestamp('createdAt', { withTimezone: true })
