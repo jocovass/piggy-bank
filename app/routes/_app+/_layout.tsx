@@ -90,7 +90,7 @@ export default function Layout() {
 									<Avatar className="h-7 w-7">
 										<AvatarImage
 											className="object-cover"
-											src={`data:image/jpeg;base64,${user.avatar}`}
+											src={`/user-image/${user?.image?.id}`}
 											alt="Avatar"
 										/>
 										<AvatarFallback className="bg-transparent">

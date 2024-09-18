@@ -127,7 +127,11 @@ export async function getSessionWithUser(sessionId: string) {
 		columns: { id: true },
 		where: (session, { eq, and, gt }) =>
 			and(eq(session.id, sessionId), gt(session.expirationDate, new UTCDate())),
-		with: { user: true },
+		with: {
+			user: {
+				with: { image: { columns: { id: true } } },
+			},
+		},
 	});
 }
 

@@ -18,7 +18,7 @@ import { type z } from 'zod';
 import { type DateToDateString } from '~/app/utils/type-helpers';
 
 export const bytea = customType<{
-	data: Buffer | null;
+	data: Buffer;
 	notNull: false;
 	default: true;
 }>({
@@ -29,7 +29,7 @@ export const bytea = customType<{
 		return val;
 	},
 	fromDriver(val) {
-		if (!(val instanceof Buffer)) return null;
+		if (!(val instanceof Buffer)) throw new Error('Invalid buffer');
 
 		return val;
 	},
@@ -53,10 +53,37 @@ export const users = pgTable('users', {
 		.$onUpdateFn(() => new UTCDate()),
 });
 
+export const userImages = pgTable('user_images', {
+	id: varchar('id', { length: 25 })
+		.primaryKey()
+		.notNull()
+		.$defaultFn(() => cuid()),
+	user_id: varchar('user_id', { length: 25 })
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' })
+		.notNull()
+		.unique(),
+	blob: bytea('blob').notNull(),
+	file_type: text('file_type').notNull(),
+	size: integer('size').notNull(),
+	name: text('name').notNull(),
+	created_at: timestamp('created_at', { withTimezone: true })
+		.notNull()
+		.defaultNow(),
+	updated_at: timestamp('updated_at', { withTimezone: true })
+		.notNull()
+		.defaultNow()
+		.$onUpdateFn(() => new UTCDate()),
+});
+
 export const userRelations = relations(users, ({ one, many }) => ({
 	password: one(passwords, {
 		fields: [users.id],
 		references: [passwords.userId],
+	}),
+	image: one(userImages, {
+		fields: [users.id],
+		references: [userImages.user_id],
 	}),
 	sessions: many(sessions, {
 		relationName: 'user_sessions',

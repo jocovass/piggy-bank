@@ -7,6 +7,7 @@ import {
 	unstable_createMemoryUploadHandler,
 } from '@remix-run/node';
 import { Form, useActionData } from '@remix-run/react';
+import { eq } from 'drizzle-orm';
 import { useState } from 'react';
 import { z } from 'zod';
 import { Field } from '~/app/components/forms';
@@ -37,6 +38,8 @@ import {
 } from '~/app/utils/toast.server';
 import { useUser } from '~/app/utils/user';
 import { NameSchema } from '~/app/utils/validation-schemas';
+import { db } from '~/db/index.server';
+import { userImages } from '~/db/schema';
 
 const updateProfileSchema = z
 	.object({
@@ -105,23 +108,36 @@ export async function action({ request }: ActionFunctionArgs) {
 		const { avatar } = submission.value;
 
 		const arrayBuffer = await avatar.arrayBuffer();
-		let image = Buffer.from(arrayBuffer).toString('base64');
+		const buffer = Buffer.from(arrayBuffer);
+		db.transaction(async transaction => {
+			await transaction
+				.delete(userImages)
+				.where(eq(userImages.user_id, user.id));
 
-		await updateUser({
-			userId: user.id,
-			data: {
-				avatar: image,
-			},
+			await transaction.insert(userImages).values({
+				user_id: user.id,
+				blob: buffer,
+				file_type: avatar.type,
+				name: avatar.name,
+				size: avatar.size,
+			});
 		});
 		toastConfig.description = 'Your avatar has been updated';
 	}
 
 	if (intent === 'delete-avatar') {
-		await updateUser({
-			userId: user.id,
-			data: {
-				avatar: null,
-			},
+		await db.transaction(async transaction => {
+			await updateUser({
+				userId: user.id,
+				data: {
+					avatar: null,
+				},
+				tx: transaction,
+			});
+
+			await transaction
+				.delete(userImages)
+				.where(eq(userImages.user_id, user.id));
 		});
 		toastConfig.description = 'Your avatar has been deleted';
 	}
@@ -153,12 +169,9 @@ export default function SettingsProfile() {
 		constraint: getZodConstraint(schema),
 		lastResult: profileSettingsAction?.data,
 		onValidate({ formData }) {
-			const res = parseWithZod(formData, { schema });
-			console.log(res);
-			return res;
+			return parseWithZod(formData, { schema });
 		},
-		shouldValidate: 'onBlur',
-		shouldRevalidate: 'onInput',
+		shouldRevalidate: 'onBlur',
 	});
 
 	const [newImage, setNewImage] = useState('');
@@ -174,7 +187,7 @@ export default function SettingsProfile() {
 				<Avatar className="h-36 w-36">
 					<AvatarImage
 						className="object-cover"
-						src={newImage || `data:image/jpeg;base64,${user.avatar}`}
+						src={newImage || `/user-image/${user?.image?.id || 'no-image'}`}
 						alt={user.firstName}
 					/>
 					<AvatarFallback>
@@ -215,7 +228,6 @@ export default function SettingsProfile() {
 										className="size-9 cursor-pointer rounded-full peer-valid:hidden"
 										size="icon"
 										variant="outline"
-										type="button"
 									>
 										<label htmlFor={avatarFields.avatar.id}>
 											<span className="sr-only">Select image</span>
@@ -229,7 +241,7 @@ export default function SettingsProfile() {
 							</Tooltip>
 						</TooltipProvider>
 
-						{user.avatar ? (
+						{user.image ? (
 							<TooltipProvider>
 								<Tooltip>
 									<TooltipTrigger asChild>
@@ -264,6 +276,7 @@ export default function SettingsProfile() {
 										name="intent"
 										value="update-avatar"
 										type="submit"
+										onClick={() => setNewImage('')}
 									>
 										<>
 											<span className="sr-only">Save image</span>
