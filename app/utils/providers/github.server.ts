@@ -13,6 +13,9 @@ export class GithubProvider implements AuthProvider {
 				callbackURL: '/auth/github/callback',
 			},
 			async ({ profile }) => {
+				// download user image
+				console.log('github profile response ', profile);
+
 				return {
 					id: profile.id,
 					email: profile.emails[0].value,
