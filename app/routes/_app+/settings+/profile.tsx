@@ -126,19 +126,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	}
 
 	if (intent === 'delete-avatar') {
-		await db.transaction(async transaction => {
-			await updateUser({
-				userId: user.id,
-				data: {
-					avatar: null,
-				},
-				tx: transaction,
-			});
-
-			await transaction
-				.delete(userImages)
-				.where(eq(userImages.user_id, user.id));
-		});
+		await db.delete(userImages).where(eq(userImages.user_id, user.id));
 		toastConfig.description = 'Your avatar has been deleted';
 	}
 

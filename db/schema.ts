@@ -41,7 +41,6 @@ export const users = pgTable('users', {
 		.notNull()
 		.$defaultFn(() => cuid()),
 	email: text('email').notNull().unique(),
-	avatar: text('avatar').default(''),
 	firstName: text('firstName').notNull(),
 	lastName: text('lastName').notNull(),
 	createdAt: timestamp('createdAt', { withTimezone: true })
