@@ -5,7 +5,12 @@ export type ProviderUser = {
 	email: string;
 	firstName: string;
 	lastName: string;
-	avatarUrl?: string;
+	image?: {
+		blob: Buffer;
+		file_type: string;
+		name: string;
+		size: number;
+	};
 };
 
 export interface AuthProvider {
