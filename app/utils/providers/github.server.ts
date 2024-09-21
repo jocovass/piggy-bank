@@ -1,6 +1,6 @@
 import { GitHubStrategy } from 'remix-auth-github';
 import { z } from 'zod';
-import { type AuthProvider } from './providers';
+import { type AuthProvider, type ProviderUser } from './providers';
 
 const GithubUserschema = z.object({ login: z.string() });
 
@@ -13,13 +13,26 @@ export class GithubProvider implements AuthProvider {
 				callbackURL: '/auth/github/callback',
 			},
 			async ({ profile }) => {
-				return {
+				const user: ProviderUser = {
 					id: profile.id,
 					email: profile.emails[0].value,
 					firstName: profile.name.givenName.split(' ')[0],
 					lastName: profile.name.givenName.split(' ')[1],
-					avatarUrl: profile.photos[0].value,
 				};
+
+				if (profile.photos[0]?.value) {
+					const response = await fetch(profile.photos[0].value);
+					const blob = await response.blob();
+					const fileType = response.headers.get('Content-Type');
+					user.image = {
+						blob: Buffer.from(await blob.arrayBuffer()),
+						file_type: fileType || '',
+						name: `github-avatar.${fileType?.split('/')[1]}`,
+						size: blob.size,
+					};
+				}
+
+				return user;
 			},
 		);
 	}

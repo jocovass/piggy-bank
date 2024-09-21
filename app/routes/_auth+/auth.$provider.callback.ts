@@ -14,7 +14,7 @@ import {
 	redirectWithToast,
 } from '~/app/utils/toast.server';
 import { db } from '~/db/index.server';
-import { connections, sessions, users } from '~/db/schema';
+import { connections, sessions, userImages, users } from '~/db/schema';
 import { ProviderNameSchema } from './auth.$provider';
 import { handleNewSession } from './login.server';
 
@@ -150,19 +150,33 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 	/**
 	 * Create a new user and new connection
 	 */
-	const [newUser] = await db
-		.insert(users)
-		.values({
-			email: profile.email.toLowerCase(),
-			firstName: profile.firstName,
-			lastName: profile.lastName,
-		})
-		.returning();
+	const newUser = await db.transaction(async tx => {
+		const [newUser] = await tx
+			.insert(users)
+			.values({
+				email: profile.email.toLowerCase(),
+				firstName: profile.firstName,
+				lastName: profile.lastName,
+			})
+			.returning();
 
-	await db.insert(connections).values({
-		providerId: profile.id,
-		providerName: 'github',
-		userId: newUser.id,
+		if (profile.image) {
+			await tx.insert(userImages).values({
+				blob: profile.image.blob,
+				file_type: profile.image.file_type,
+				name: profile.image.name,
+				size: profile.image.size,
+				user_id: newUser.id,
+			});
+		}
+
+		await tx.insert(connections).values({
+			providerId: profile.id,
+			providerName: 'github',
+			userId: newUser.id,
+		});
+
+		return newUser;
 	});
 
 	return await makeSession({ request, userId: newUser.id });
