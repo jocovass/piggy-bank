@@ -88,6 +88,8 @@ export async function action({ request }: ActionFunctionArgs) {
 	if (type === 'onboarding') {
 		await deleteVerification();
 		return await handleOnbaordingVerification({ email: target, request });
+	} else if (type === 'change-email') {
+		await deleteVerification();
 	} else if (type === '2fa') {
 		return await handleTwoFAVerification({
 			body: formData,

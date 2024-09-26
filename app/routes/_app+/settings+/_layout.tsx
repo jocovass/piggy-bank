@@ -10,8 +10,12 @@ export default function SettingsLayout() {
 					<NavItem to="profile" className="px-7 py-1">
 						Profile
 					</NavItem>
-					<NavItem to="email">Change email</NavItem>
-					<NavItem to="password">Change password</NavItem>
+					<NavItem to="email" className="px-7 py-1">
+						Change email
+					</NavItem>
+					<NavItem to="password" className="px-7 py-1">
+						Change password
+					</NavItem>
 				</nav>
 			</div>
 

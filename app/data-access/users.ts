@@ -19,3 +19,17 @@ export async function updateUser({
 
 	return user[0];
 }
+
+export async function getUserByEmail({
+	email,
+	tx = db,
+}: {
+	email: string;
+	tx?: DB;
+}) {
+	const user = await tx.query.users.findFirst({
+		where: eq(users.email, email),
+	});
+
+	return user;
+}
