@@ -9,9 +9,14 @@ import { Button } from '~/app/components/ui/button';
 import { getUserByEmail } from '~/app/data-access/users';
 import { prepareOtpVerification } from '~/app/routes/_auth+/verify.server';
 import { requireUser } from '~/app/utils/auth.server';
+import { sendEmail } from '~/app/utils/email.server';
+import { ChangeEmail } from '~/app/utils/emailTemplates';
 import { useDelayedIsPending } from '~/app/utils/misc';
 import { useUser } from '~/app/utils/user';
 import { EmailSchema } from '~/app/utils/validation-schemas';
+import { verifySessionStorage } from '~/app/utils/verification.server';
+
+export const newEmaailVerifySessionKey = 'change-email-verify';
 
 const schema = z.object({
 	email: EmailSchema,
@@ -53,9 +58,28 @@ export async function action({ request }: ActionFunctionArgs) {
 		type: 'change-email',
 	});
 
-	console.log({ otp, redirectUrl, verifyUrl });
+	const result = await sendEmail({
+		subject: 'Confirm your new email address',
+		to: email,
+		react: <ChangeEmail otp={otp} url={verifyUrl.toString()} />,
+	});
 
-	return redirect(redirectUrl.toString());
+	if (result.status === 'error') {
+		return json(
+			{ data: submission.reply({ formErrors: [result.error.message] }) },
+			{ status: result.error.statusCode },
+		);
+	}
+
+	const verifySession = await verifySessionStorage.getSession(
+		request.headers.get('Cookie'),
+	);
+	verifySession.set(newEmaailVerifySessionKey, email);
+	return redirect(redirectUrl.toString(), {
+		headers: {
+			'Set-Cookie': await verifySessionStorage.commitSession(verifySession),
+		},
+	});
 }
 
 export default function Email() {

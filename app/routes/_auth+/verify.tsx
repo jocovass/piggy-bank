@@ -16,6 +16,7 @@ import {
 	InputOTPGroup,
 	InputOTPSlot,
 } from '~/app/components/ui/input-otp';
+import { handleChangeEmailVerification } from '~/app/routes/_app+/settings+/email.server';
 import { OTPSchema, RedirectSchema } from '~/app/utils/validation-schemas';
 import { db } from '~/db/index.server';
 import { verifications } from '~/db/schema';
@@ -90,6 +91,10 @@ export async function action({ request }: ActionFunctionArgs) {
 		return await handleOnbaordingVerification({ email: target, request });
 	} else if (type === 'change-email') {
 		await deleteVerification();
+		return handleChangeEmailVerification({
+			request,
+			submission,
+		});
 	} else if (type === '2fa') {
 		return await handleTwoFAVerification({
 			body: formData,
