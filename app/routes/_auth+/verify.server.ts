@@ -99,9 +99,9 @@ export async function prepareOtpVerification({
 	});
 
 	const verificationConfig = {
-		...totpConfig,
-		type: 'onboarding',
+		type,
 		target,
+		...totpConfig,
 		expiresAt: new UTCDate(Date.now() + period * 1000),
 	};
 

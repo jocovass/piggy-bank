@@ -5,7 +5,7 @@ import { twMerge } from 'tailwind-merge';
 
 export function useIsPending({
 	formAction,
-	formMethod = 'GET',
+	formMethod = 'POST',
 	state = 'non-idle',
 }: {
 	formAction?: string;
