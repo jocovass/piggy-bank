@@ -7,7 +7,10 @@ import { Field } from '~/app/components/forms';
 import Spinner from '~/app/components/icons/spinner';
 import { Button } from '~/app/components/ui/button';
 import { getUserByEmail } from '~/app/data-access/users';
-import { prepareOtpVerification } from '~/app/routes/_auth+/verify.server';
+import {
+	prepareOtpVerification,
+	requireRecentTwoFactorAuth,
+} from '~/app/routes/_auth+/verify.server';
 import { requireUser } from '~/app/utils/auth.server';
 import { sendEmail } from '~/app/utils/email.server';
 import { ChangeEmail } from '~/app/utils/emailTemplates';
@@ -24,6 +27,7 @@ const schema = z.object({
 
 export async function action({ request }: ActionFunctionArgs) {
 	const user = await requireUser(request);
+	await requireRecentTwoFactorAuth(request, user);
 	const form = await request.formData();
 	const submission = await parseWithZod(form, {
 		schema: schema.superRefine(async ({ email }, ctx) => {
