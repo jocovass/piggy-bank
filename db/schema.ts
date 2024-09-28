@@ -107,7 +107,8 @@ export const passwords = pgTable(
 		hash: text('hash').notNull(),
 		userId: varchar('userId', { length: 25 })
 			.references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' })
-			.notNull(),
+			.notNull()
+			.unique(),
 		createdAt: timestamp('createdAt', { withTimezone: true })
 			.notNull()
 			.defaultNow(),
@@ -556,6 +557,7 @@ export type InsertUser = z.infer<typeof insertUserChema>;
  */
 export const selectPasswordSchema = createSelectSchema(passwords);
 export type Password = z.infer<typeof selectPasswordSchema>;
+export type InsertPassword = z.infer<typeof selectPasswordSchema>;
 
 /**
  * Session types

@@ -67,7 +67,7 @@ export async function signup({
 	lastName,
 	password,
 }: SignupArgs) {
-	const hash = await bcrypt.hash(password, 10);
+	const hash = await hashPassword(password);
 	const session = await db.transaction(async tx => {
 		const [newUser] = await tx
 			.insert(users)
@@ -97,6 +97,18 @@ export async function signup({
 	return session;
 }
 
+export async function hashPassword(password: string) {
+	return await bcrypt.hash(password, 10);
+}
+
+export async function comparePassowrds(
+	password: string,
+	hashedPassword: string,
+) {
+	const isValid = await bcrypt.compare(password, hashedPassword);
+	return isValid;
+}
+
 export async function verifyPassword({
 	email,
 	password,
@@ -113,7 +125,7 @@ export async function verifyPassword({
 		return null;
 	}
 
-	const isValid = await bcrypt.compare(password, user.password.hash);
+	const isValid = await comparePassowrds(password, user.password.hash);
 
 	if (!isValid) {
 		return null;
