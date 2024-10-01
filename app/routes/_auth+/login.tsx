@@ -79,17 +79,17 @@ export default function LoginRoute() {
 		<div className="flex min-h-screen flex-col lg:p-8 lg:pb-16">
 			<div className="flex">
 				<Button asChild className="ml-auto" variant="ghost">
-					<NavLink to="/signup">Sign up</NavLink>
+					<NavLink to="/signup">Signup</NavLink>
 				</Button>
 			</div>
 
 			<div className="mx-auto flex w-full flex-1 flex-col justify-center space-y-6 sm:w-[350px]">
 				<div className="text-center">
 					<h1 className="text-2xl font-semibold tracking-tight">
-						Create an account
+						Welcome back
 					</h1>
 					<p className="text-sm text-muted-foreground">
-						Enter your email below to create your account
+						Log in to manage your finances
 					</p>
 				</div>
 
@@ -112,7 +112,7 @@ export default function LoginRoute() {
 					/>
 
 					<Button type="submit" className="mt-4 w-full">
-						Submit
+						Login
 					</Button>
 				</Form>
 

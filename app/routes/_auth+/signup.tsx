@@ -1,7 +1,7 @@
 import { useForm, getFormProps, getInputProps } from '@conform-to/react';
 import { parseWithZod, getZodConstraint } from '@conform-to/zod';
 import { type ActionFunctionArgs, json, redirect } from '@remix-run/node';
-import { Form, useActionData } from '@remix-run/react';
+import { Form, NavLink, useActionData } from '@remix-run/react';
 import { z } from 'zod';
 import { Field } from '~/app/components/forms';
 import { Button } from '~/app/components/ui/button';
@@ -81,9 +81,23 @@ export default function SignupRoute() {
 	});
 
 	return (
-		<div className="flex w-full items-center justify-center py-52">
-			<div>
-				<h1 className="mb-5 text-4xl font-bold">Signup</h1>
+		<div className="flex min-h-screen flex-col lg:p-8 lg:pb-16">
+			<div className="flex">
+				<Button asChild className="ml-auto" variant="ghost">
+					<NavLink to="/login">Login</NavLink>
+				</Button>
+			</div>
+
+			<div className="mx-auto flex w-full flex-1 flex-col justify-center space-y-6 sm:w-[350px]">
+				<div className="text-center">
+					<h1 className="text-2xl font-semibold tracking-tight">
+						Create an account
+					</h1>
+					<p className="text-sm text-muted-foreground">
+						Enter your email below to create your account
+					</p>
+				</div>
+
 				<Form method="POST" {...getFormProps(form)}>
 					<div id={form.errorId}>{form.errors}</div>
 					<Field
@@ -96,8 +110,30 @@ export default function SignupRoute() {
 						labelProps={{ children: 'Email', htmlFor: fields.email.id }}
 					/>
 
-					<Button type="submit">Submit</Button>
+					<Button type="submit" className="mt-4 w-full">
+						Signup
+					</Button>
 				</Form>
+
+				<div className="text-center">
+					<p className="px-8 text-center text-sm text-muted-foreground">
+						By clicking continue, you agree to our{' '}
+						<NavLink
+							to="/terms"
+							className="underline underline-offset-4 hover:text-primary"
+						>
+							Terms of Service
+						</NavLink>{' '}
+						and{' '}
+						<NavLink
+							to="/privacy"
+							className="underline underline-offset-4 hover:text-primary"
+						>
+							Privacy Policy
+						</NavLink>
+						.
+					</p>
+				</div>
 			</div>
 		</div>
 	);

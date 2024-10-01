@@ -120,9 +120,23 @@ export default function OnboardingRoute() {
 	});
 
 	return (
-		<div className="flex w-full items-center justify-center py-52">
-			<div>
-				<h1 className="mb-5 text-4xl font-bold">Welcome: {data.email}</h1>
+		<div className="flex min-h-screen flex-col lg:p-8 lg:pb-16">
+			<div className="flex">
+				<Button className="ml-auto" variant="ghost">
+					Light
+				</Button>
+			</div>
+
+			<div className="mx-auto flex w-full flex-1 flex-col justify-center space-y-6 sm:w-[350px]">
+				<div className="text-center">
+					<h1 className="text-2xl font-semibold tracking-tight">
+						Welcome to Piggy Bank
+					</h1>
+					<h2 className="mb-4 font-bold">{data.email}</h2>
+					<p className="text-sm text-muted-foreground">
+						Please fill out the form to complete your onboarding
+					</p>
+				</div>
 				<Form method="POST" {...getFormProps(form)}>
 					<div id={form.errorId}>{form.errors}</div>
 
@@ -166,7 +180,9 @@ export default function OnboardingRoute() {
 
 					<input {...getInputProps(fields.redirectTo, { type: 'hidden' })} />
 
-					<Button type="submit">Submit</Button>
+					<Button type="submit" className="mt-4 w-full">
+						Submit
+					</Button>
 				</Form>
 			</div>
 		</div>

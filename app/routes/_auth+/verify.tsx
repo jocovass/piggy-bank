@@ -6,15 +6,22 @@ import {
 } from '@conform-to/react';
 import { getZodConstraint, parseWithZod } from '@conform-to/zod';
 import { type ActionFunctionArgs, json } from '@remix-run/node';
-import { Form, useActionData, useSearchParams } from '@remix-run/react';
+import {
+	Form,
+	NavLink,
+	useActionData,
+	useSearchParams,
+} from '@remix-run/react';
 import { and, eq } from 'drizzle-orm';
 import { REGEXP_ONLY_DIGITS_AND_CHARS } from 'input-otp';
+import { useMemo } from 'react';
 import { z } from 'zod';
 import { Button } from '~/app/components/ui/button';
 import {
 	InputOTP,
 	InputOTPGroup,
 	InputOTPSlot,
+	InputOTPSeparator,
 } from '~/app/components/ui/input-otp';
 import { handleChangeEmailVerification } from '~/app/routes/_app+/settings+/email.server';
 import { OTPSchema, RedirectSchema } from '~/app/utils/validation-schemas';
@@ -107,35 +114,74 @@ export async function action({ request }: ActionFunctionArgs) {
 export default function Verify() {
 	const actionData = useActionData<typeof action>();
 	const [searchParams] = useSearchParams();
+	const type = searchParams.get(verifyTypeParamKey);
 	const [form, fields] = useForm({
 		constraint: getZodConstraint(VerifySchema),
 		defaultValue: {
 			target: searchParams.get(verifyTargetParamKey),
-			type: searchParams.get(verifyTypeParamKey),
+			type,
 			redirectTo: searchParams.get(verifyRedirectToParamKey),
 		},
 		lastResult: actionData?.data,
 		onValidate({ formData }) {
 			return parseWithZod(formData, { schema: VerifySchema });
 		},
-		shouldValidate: 'onBlur',
-		shouldRevalidate: 'onInput',
+		shouldValidate: 'onSubmit',
 	});
 	const otp = useInputControl(fields.otp);
 
-	const onChange = (value: string) => otp.change(value.toUpperCase());
+	const textNodes = useMemo(() => {
+		if (type === '2fa') {
+			return (
+				<>
+					<h1 className="text-2xl font-semibold tracking-tight">Verify</h1>
+					<p className="text-sm text-muted-foreground">
+						Please verify your identity by entering the OTP code from you
+						authenticator app
+					</p>
+				</>
+			);
+		} else if (type === 'onboarding') {
+			return (
+				<>
+					<h1 className="text-2xl font-semibold tracking-tight">
+						Verify to continue
+					</h1>
+					<p className="text-sm text-muted-foreground">
+						Please enter the code we sent to your email address
+					</p>
+				</>
+			);
+		} else if (type === 'change-email') {
+			return (
+				<>
+					<h1 className="text-2xl font-semibold tracking-tight">
+						Verify your email address
+					</h1>
+					<p className="text-sm text-muted-foreground">
+						Please enter the code we sent to your new email address
+					</p>
+				</>
+			);
+		}
+	}, [type]);
 
 	return (
-		<div className="flex w-full items-center justify-center py-52">
-			<div>
-				<h1 className="mb-5 text-4xl font-bold">Verify Route</h1>
+		<div className="flex min-h-screen flex-col lg:p-8 lg:pb-16">
+			<div className="flex">
+				<Button asChild className="ml-auto" variant="ghost">
+					<NavLink to="/signup">Signup</NavLink>
+				</Button>
+			</div>
+			<div className="mx-auto flex w-full flex-1 flex-col items-center justify-center space-y-6 sm:w-[350px]">
+				<div className="text-center">{textNodes}</div>
 				<Form method="POST" {...getFormProps(form)}>
 					<InputOTP
 						maxLength={6}
 						pattern={REGEXP_ONLY_DIGITS_AND_CHARS}
 						name={fields.otp.name}
 						value={otp.value}
-						onChange={onChange}
+						onChange={value => otp.change(value.toUpperCase())}
 						onBlur={otp.blur}
 						onFocus={otp.focus}
 						type="text"
@@ -144,15 +190,21 @@ export default function Verify() {
 							<InputOTPSlot index={0} />
 							<InputOTPSlot index={1} />
 							<InputOTPSlot index={2} />
+						</InputOTPGroup>
+						<InputOTPSeparator />
+						<InputOTPGroup>
 							<InputOTPSlot index={3} />
 							<InputOTPSlot index={4} />
 							<InputOTPSlot index={5} />
 						</InputOTPGroup>
 					</InputOTP>
+					<p className="pt-1 text-sm text-primary">{fields.otp.errors?.[0]}</p>
 					<input {...getInputProps(fields.target, { type: 'hidden' })} />
 					<input {...getInputProps(fields.type, { type: 'hidden' })} />
 					<input {...getInputProps(fields.redirectTo, { type: 'hidden' })} />
-					<Button type="submit">Submit</Button>
+					<Button type="submit" className="mt-8 w-full">
+						Submit
+					</Button>
 				</Form>
 			</div>
 		</div>
