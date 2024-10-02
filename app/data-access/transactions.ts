@@ -1,4 +1,4 @@
-import { eq, inArray, sql } from 'drizzle-orm';
+import { eq, inArray, sql, type DBQueryConfig } from 'drizzle-orm';
 import { z } from 'zod';
 import { conflictUpdateSetAllColumns } from '~/app/utils/db';
 import { type DB, db } from '~/db/index.server';

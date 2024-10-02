@@ -71,8 +71,7 @@ export default function LoginRoute() {
 		onValidate({ formData }) {
 			return parseWithZod(formData, { schema: LoginSchema });
 		},
-		shouldValidate: 'onBlur',
-		shouldRevalidate: 'onInput',
+		shouldValidate: 'onSubmit',
 	});
 
 	return (
