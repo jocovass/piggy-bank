@@ -1,4 +1,4 @@
-import { eq, inArray, sql, type DBQueryConfig } from 'drizzle-orm';
+import { eq, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { conflictUpdateSetAllColumns } from '~/app/utils/db';
 import { type DB, db } from '~/db/index.server';
@@ -66,19 +66,19 @@ export async function deleteTransactions({
 
 export async function getTransactions({
 	userId,
-	offset = 0,
+	page = 0,
 	limit = 30,
 	tx = db,
 }: {
 	userId: string;
 	limit?: number;
-	offset?: number;
+	page?: number;
 	tx?: DB;
 }) {
 	return tx.query.transactions.findMany({
 		where: (transaction, { eq }) => eq(transaction.user_id, userId),
 		limit,
-		offset,
+		offset: page * limit,
 	});
 }
 
