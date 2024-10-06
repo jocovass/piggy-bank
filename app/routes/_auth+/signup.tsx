@@ -5,6 +5,7 @@ import { Form, NavLink, useActionData } from '@remix-run/react';
 import { z } from 'zod';
 import { Field } from '~/app/components/forms';
 import { Button } from '~/app/components/ui/button';
+import ThemeSwitch from '~/app/routes/_resources+/theme-switch';
 import { sendEmail } from '~/app/utils/email.server';
 import { SignupEmail } from '~/app/utils/emailTemplates';
 import { EmailSchema } from '~/app/utils/validation-schemas';
@@ -83,6 +84,7 @@ export default function SignupRoute() {
 	return (
 		<div className="flex min-h-screen flex-col lg:p-8 lg:pb-16">
 			<div className="flex">
+				<ThemeSwitch />
 				<Button asChild className="ml-auto" variant="ghost">
 					<NavLink to="/login">Login</NavLink>
 				</Button>

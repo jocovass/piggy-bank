@@ -24,6 +24,7 @@ import {
 	InputOTPSeparator,
 } from '~/app/components/ui/input-otp';
 import { handleChangeEmailVerification } from '~/app/routes/_app+/settings+/email.server';
+import ThemeSwitch from '~/app/routes/_resources+/theme-switch';
 import { OTPSchema, RedirectSchema } from '~/app/utils/validation-schemas';
 import { db } from '~/db/index.server';
 import { verifications } from '~/db/schema';
@@ -169,6 +170,7 @@ export default function Verify() {
 	return (
 		<div className="flex min-h-screen flex-col lg:p-8 lg:pb-16">
 			<div className="flex">
+				<ThemeSwitch />
 				<Button asChild className="ml-auto" variant="ghost">
 					<NavLink to="/signup">Signup</NavLink>
 				</Button>
