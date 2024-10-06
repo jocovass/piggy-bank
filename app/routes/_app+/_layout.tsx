@@ -13,7 +13,6 @@ import Settings from '~/app/components/icons/settings';
 import XMark from '~/app/components/icons/x-mark';
 import Nav from '~/app/components/nav';
 import NavItem from '~/app/components/nav-item';
-import ThemeSwitch from '~/app/components/theme-switch';
 import {
 	Avatar,
 	AvatarImage,
@@ -26,6 +25,7 @@ import {
 	Popover,
 } from '~/app/components/ui/popover';
 import { Separator } from '~/app/components/ui/separator';
+import ThemeSwitch from '~/app/routes/_resources+/theme-switch';
 import { requireUser } from '~/app/utils/auth.server';
 import { usePresence } from '~/app/utils/usePresence';
 import { useUser } from '~/app/utils/user';

@@ -1,6 +1,4 @@
-import { parseWithZod } from '@conform-to/zod';
 import {
-	type ActionFunctionArgs,
 	type LinksFunction,
 	type LoaderFunctionArgs,
 	json,
@@ -14,57 +12,18 @@ import {
 	useLoaderData,
 	useRouteError,
 } from '@remix-run/react';
-import { z } from 'zod';
 import { Toaster } from '~/app/components/ui/sonner';
 import tailwindCss from '~/app/styles/tailwind.css?url';
 import { useTheme } from './hooks/useTheme';
 import { getUserFromSession } from './utils/auth.server';
 import { ClientHintCheck, getHints } from './utils/client-hints';
-import {
-	clearTheme,
-	getTheme,
-	setTheme,
-	type Theme,
-} from './utils/theme.server';
-import { createToastHeader, getToastFromRequest } from './utils/toast.server';
+import { getTheme, type Theme } from './utils/theme.server';
+import { getToastFromRequest } from './utils/toast.server';
 import { useToast } from './utils/toaster';
 
 export const links: LinksFunction = () => {
 	return [{ rel: 'stylesheet', href: tailwindCss }];
 };
-
-const schema = z.object({
-	theme: z.enum(['system', 'light', 'dark']).optional(),
-});
-
-export async function action({ request }: ActionFunctionArgs) {
-	const form = await request.formData();
-	const submission = await parseWithZod(form, { schema, async: true });
-
-	if (submission.status !== 'success') {
-		return json(
-			{ data: submission.reply() },
-			{
-				status: submission.status === 'error' ? 400 : 200,
-				headers: await createToastHeader({
-					title: 'Error',
-					description: 'Invalid theme',
-					type: 'error',
-				}),
-			},
-		);
-	}
-
-	const { theme } = submission.value;
-
-	let cookieString: string | null = null;
-	if (theme === 'system') {
-		cookieString = await clearTheme(request);
-	} else {
-		cookieString = await setTheme(request, theme as Theme);
-	}
-	return json({}, { headers: { 'Set-Cookie': cookieString } });
-}
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const user = await getUserFromSession(request);
