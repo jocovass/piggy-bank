@@ -74,8 +74,10 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export function AddBankAccount({
 	children,
+	itemId,
 }: {
 	children?: ({ loading }: { loading: boolean }) => ReactNode;
+	itemId?: string;
 }) {
 	const generateLinkToken = useFetcher<typeof action>();
 	const user = useUser();
@@ -102,7 +104,9 @@ export function AddBankAccount({
 				)}
 			</generateLinkToken.Form>
 
-			{linkToken && <LaunchLink link={linkToken} userId={user.id} />}
+			{linkToken && (
+				<LaunchLink itemId={itemId} link={linkToken} userId={user.id} />
+			)}
 		</>
 	);
 }

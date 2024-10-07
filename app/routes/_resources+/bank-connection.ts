@@ -1,11 +1,16 @@
 import { parseWithZod } from '@conform-to/zod';
 import { type ActionFunctionArgs, json } from '@remix-run/node';
+import { getAccounts } from '~/app/data-access/accounts';
 import {
 	getBankConnectionByItemId,
 	getConsentExpirationDate,
 	updateBankConnection,
 } from '~/app/data-access/bank-connections';
-import { getItem, isPliadError } from '~/app/services/plaid.server';
+import {
+	getAccounts as getAccountsFromPlaid,
+	getItem,
+	isPliadError,
+} from '~/app/services/plaid.server';
 import { requireUser } from '~/app/utils/auth.server';
 import { createToastHeader } from '~/app/utils/toast.server';
 import { ItemSchema } from '~/app/utils/validation-schemas';
@@ -17,7 +22,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		schema: ItemSchema.required(),
 		async: true,
 	});
-
+	console.log('submission status', submission.status);
 	if (submission.status !== 'success') {
 		const { error } = submission;
 		const errorMessage = error?.itemId
@@ -40,7 +45,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		itemId,
 		columns: { access_token: true, id: true },
 	});
-
+	console.log('bankConnection', bankConnection?.name);
 	if (!bankConnection) {
 		return json({ status: 'error' } as const, {
 			headers: await createToastHeader({
@@ -57,6 +62,12 @@ export async function action({ request }: ActionFunctionArgs) {
 			accessToken: bankConnection.access_token,
 		});
 
+		const accountsResponse = await getAccountsFromPlaid({
+			accessToken: bankConnection.access_token,
+		});
+
+		const accounts = await getAccounts({});
+
 		const { consent_expiration_time } = response.item;
 
 		await updateBankConnection({
@@ -67,6 +78,8 @@ export async function action({ request }: ActionFunctionArgs) {
 				),
 			},
 		});
+
+		return json(null);
 	} catch (err) {
 		if (isPliadError(err)) {
 			return json({ status: 'error' } as const, {
