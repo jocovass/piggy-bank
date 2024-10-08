@@ -97,6 +97,7 @@ export function AddBankAccount({
 				method="POST"
 				action="/generate-link-token"
 			>
+				<input type="hidden" name="itemId" value={itemId} />
 				{children ? (
 					children({ loading: loading })
 				) : (

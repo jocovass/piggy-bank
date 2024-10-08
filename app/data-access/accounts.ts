@@ -1,4 +1,4 @@
-import { eq, type SQLWrapper } from 'drizzle-orm';
+import { and, eq, type SQLWrapper } from 'drizzle-orm';
 import {
 	type ColumnsSelection,
 	conflictUpdateSetAllColumns,
@@ -47,15 +47,16 @@ export async function updateAccount({
 	return result;
 }
 
-export async function getAccounts(userId: string, tx?: Transaction) {
-	const where: SQLWrapper[] = [eq(1, 1)];
+export async function getAccounts(userId: string, tx: DB = db) {
+	const where: SQLWrapper[] = [eq(accounts.is_active, true)];
 
-	const _db = tx ?? db;
-	const data = await _db.query.accounts.findMany({
-		where: (account, { eq }) => eq(account.user_id, userId),
+	if (userId) {
+		where.push(eq(accounts.user_id, userId));
+	}
+
+	return tx.query.accounts.findMany({
+		where: and(...where),
 	});
-
-	return data;
 }
 
 export async function getAccountsByBankConnectionId({

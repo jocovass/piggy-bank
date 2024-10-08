@@ -62,7 +62,7 @@ export async function generateLinkToken({
 	userId: string;
 }) {
 	const domain = getDomainUrl(request);
-	let accessToken: string[] | undefined;
+	let accessToken: string | undefined;
 	let products: Products[] = [Products.Transactions];
 
 	/**
@@ -82,12 +82,12 @@ export async function generateLinkToken({
 			throw new Error('Item does not exist.');
 		}
 
-		accessToken = [bankConnection.access_token];
+		accessToken = bankConnection.access_token;
 		products = [];
 	}
 
 	const linkTokenConfig: LinkTokenCreateRequest = {
-		access_tokens: accessToken,
+		access_token: accessToken,
 		user: { client_user_id: userId },
 		/**
 		 * This is used to test the "returning user" flow. It means if the user
@@ -198,7 +198,7 @@ export async function fetchTransactions({
 	cursor,
 }: {
 	accessToken: string;
-	cursor?: string;
+	cursor?: string | null;
 }): FetchTransactionsResponse;
 export async function fetchTransactions({
 	itemId,
@@ -207,7 +207,7 @@ export async function fetchTransactions({
 }: {
 	itemId?: string;
 	accessToken?: string;
-	cursor?: string;
+	cursor?: string | null;
 }) {
 	let access_token!: string;
 	let transaction_cursor!: string | null | undefined;
