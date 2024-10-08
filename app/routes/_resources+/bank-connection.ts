@@ -1,17 +1,27 @@
 import { parseWithZod } from '@conform-to/zod';
+import { UTCDate } from '@date-fns/utc';
 import { type ActionFunctionArgs, json } from '@remix-run/node';
+import { createAccounts } from '~/app/data-access/accounts';
 import {
 	getBankConnectionByItemId,
-	getConsentExpirationDate,
 	updateBankConnection,
 } from '~/app/data-access/bank-connections';
-import { getItem, isPliadError } from '~/app/services/plaid.server';
+import {
+	createOrUpdateTransactions,
+	deleteTransactions,
+} from '~/app/data-access/transactions';
+import {
+	fetchTransactions,
+	getAccounts as getAccountsFromPlaid,
+	isPliadError,
+} from '~/app/services/plaid.server';
 import { requireUser } from '~/app/utils/auth.server';
 import { createToastHeader } from '~/app/utils/toast.server';
 import { ItemSchema } from '~/app/utils/validation-schemas';
+import { db } from '~/db/index.server';
 
 export async function action({ request }: ActionFunctionArgs) {
-	await requireUser(request);
+	const user = await requireUser(request);
 	const form = await request.formData();
 	const submission = await parseWithZod(form, {
 		schema: ItemSchema.required(),
@@ -38,7 +48,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
 	const bankConnection = await getBankConnectionByItemId({
 		itemId,
-		columns: { access_token: true, id: true },
+		columns: { access_token: true, id: true, transaction_cursor: true },
 	});
 
 	if (!bankConnection) {
@@ -53,20 +63,90 @@ export async function action({ request }: ActionFunctionArgs) {
 	}
 
 	try {
-		const response = await getItem({
+		const accountsResponse = await getAccountsFromPlaid({
 			accessToken: bankConnection.access_token,
 		});
 
-		const { consent_expiration_time } = response.item;
-
-		await updateBankConnection({
-			bankConnectionId: bankConnection.id,
-			data: {
-				consent_expiration_time: getConsentExpirationDate(
-					consent_expiration_time,
-				),
-			},
+		const { added, cursor, modified, removed } = await fetchTransactions({
+			accessToken: bankConnection.access_token,
+			cursor: bankConnection.transaction_cursor,
 		});
+
+		await db.transaction(async tx => {
+			const createdAccounts = await createAccounts({
+				plaidAccounts: accountsResponse.accounts.map(account => ({
+					bank_connection_id: bankConnection.id,
+					user_id: user.id,
+					plaid_account_id: account.account_id,
+					name: account.name,
+					official_name: account.official_name,
+					mask: account.mask,
+					current_balance: account.balances.current
+						? String(account.balances.current)
+						: undefined,
+					available_balance: account.balances.available
+						? String(account.balances.available)
+						: undefined,
+					iso_currency_code: account.balances.iso_currency_code,
+					type: account.type,
+					subtype: account.subtype,
+				})),
+				tx,
+			});
+
+			const transactionsToCreateOrUpdate = added
+				.concat(modified)
+				.map(transaction => {
+					const account = createdAccounts.find(
+						account => account.plaid_account_id === transaction.account_id,
+					);
+
+					if (!account) {
+						throw new Error('Transaction does not have an account');
+					}
+
+					return {
+						account_id: account.id,
+						user_id: user.id,
+						amount: String(transaction.amount),
+						iso_currency_code: transaction.iso_currency_code,
+						unofficial_currency_code: transaction.unofficial_currency_code,
+						name: transaction.name,
+						pending: transaction.pending,
+						payment_channel: transaction.payment_channel,
+						logo_url: transaction.logo_url,
+						authorized_date: new UTCDate(
+							transaction.authorized_date || UTCDate.now(),
+						),
+						plaid_transaction_id: transaction.transaction_id,
+						category: transaction.personal_finance_category?.primary,
+						subcategory: transaction.personal_finance_category?.detailed,
+						is_active: true,
+					};
+				});
+
+			await createOrUpdateTransactions({
+				plaidTransactions: transactionsToCreateOrUpdate,
+				tx,
+			});
+
+			await deleteTransactions({
+				deletableTransactions: removed.map(
+					transaction => transaction.transaction_id,
+				),
+				tx,
+			});
+
+			await updateBankConnection({
+				bankConnectionId: bankConnection.id,
+				data: {
+					transaction_cursor: cursor,
+				},
+				tx,
+			});
+		});
+
+		return json(null);
 	} catch (err) {
 		if (isPliadError(err)) {
 			return json({ status: 'error' } as const, {

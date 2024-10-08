@@ -1,5 +1,4 @@
 import ArrowRightRect from '~/app/components/icons/arrow-right-rect';
-import CreditCard from '~/app/components/icons/credit-card';
 import RectangleGroup from '~/app/components/icons/rectangle-group';
 import Settings from '~/app/components/icons/settings';
 import Transaction from '~/app/components/icons/transaction';
@@ -24,12 +23,12 @@ export default function Nav() {
 								Transactions
 							</NavItem>
 						</li>
-						<li>
+						{/* <li>
 							<NavItem to="/accounts">
 								<CreditCard className="size-5" />
 								Accounts
 							</NavItem>
-						</li>
+						</li> */}
 					</ul>
 				</li>
 				<li className="mt-auto">
