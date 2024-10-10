@@ -1,6 +1,6 @@
 import { UTCDate } from '@date-fns/utc';
 import { createId as cuid } from '@paralleldrive/cuid2';
-import { relations } from 'drizzle-orm';
+import { relations, sql, type SQL } from 'drizzle-orm';
 import {
 	boolean,
 	customType,
@@ -32,6 +32,12 @@ export const bytea = customType<{
 		if (!(val instanceof Buffer)) throw new Error('Invalid buffer');
 
 		return val;
+	},
+});
+
+export const tsVector = customType<{ data: string }>({
+	dataType() {
+		return 'tsvector';
 	},
 });
 
@@ -512,6 +518,11 @@ export const transactions = pgTable(
 		/**
 		 * A flag that indicates whether a transaction is active or not.
 		 */
+		fts_doc: tsVector('fts_doc', {
+			dimensions: 3,
+		}).generatedAlwaysAs(
+			(): SQL => sql`to_tsvector('english', ${transactions.name})`,
+		),
 		is_active: boolean('is_active').notNull().default(true),
 		created_at: timestamp('created_at', { withTimezone: true })
 			.notNull()
