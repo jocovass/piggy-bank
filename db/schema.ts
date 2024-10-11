@@ -521,7 +521,12 @@ export const transactions = pgTable(
 		fts_doc: tsVector('fts_doc', {
 			dimensions: 3,
 		}).generatedAlwaysAs(
-			(): SQL => sql`to_tsvector('english', ${transactions.name})`,
+			(): SQL =>
+				sql`
+					setweight(to_tsvector('english', ${transactions.name}), 'A') ||
+					setweight(to_tsvector('english', ${transactions.category}), 'B') ||
+					setweight(to_tsvector('english', ${transactions.subcategory}), 'B')
+				`,
 		),
 		is_active: boolean('is_active').notNull().default(true),
 		created_at: timestamp('created_at', { withTimezone: true })
@@ -539,6 +544,10 @@ export const transactions = pgTable(
 			),
 			index_transactions_user_id: index('index_transactions_user_id').on(
 				table.user_id,
+			),
+			index_transactions_fts_doc: index('index_transactions_fts_doc').using(
+				'gin',
+				table.fts_doc,
 			),
 		};
 	},

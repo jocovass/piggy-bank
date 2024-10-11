@@ -1,4 +1,4 @@
-import { eq, inArray, sql } from 'drizzle-orm';
+import { and, eq, inArray, sql, type SQLWrapper } from 'drizzle-orm';
 import { z } from 'zod';
 import { conflictUpdateSetAllColumns } from '~/app/utils/db';
 import { type DB, db } from '~/db/index.server';
@@ -68,17 +68,32 @@ export async function getTransactions({
 	userId,
 	page = 0,
 	limit = 30,
+	searchTerm,
 	tx = db,
 }: {
 	userId: string;
 	limit?: number;
 	page?: number;
+	searchTerm?: string;
 	tx?: DB;
 }) {
+	const where: SQLWrapper[] = [eq(transactions.is_active, true)];
+
+	if (userId) {
+		where.push(eq(transactions.user_id, userId));
+	}
+
+	if (searchTerm) {
+		where.push(
+			sql`${transactions.fts_doc} @@ plainto_tsquery('english', ${searchTerm})`,
+		);
+	}
+
 	return tx.query.transactions.findMany({
-		where: (transaction, { eq }) => eq(transaction.user_id, userId),
+		where: and(...where),
 		limit,
 		offset: page * limit,
+		orderBy: transactions.authorized_date,
 	});
 }
 
