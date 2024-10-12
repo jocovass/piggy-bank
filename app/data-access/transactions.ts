@@ -1,7 +1,7 @@
 import { and, eq, inArray, sql, type SQLWrapper } from 'drizzle-orm';
 import { z } from 'zod';
 import { conflictUpdateSetAllColumns } from '~/app/utils/db';
-import { type DB, db } from '~/db/index.server';
+import { type DB, type Transaction, db } from '~/db/index.server';
 import { transactions, type InsertTransaction } from '~/db/schema';
 
 export const TotalExpenseSchema = z.object({
@@ -21,7 +21,7 @@ export async function createOrUpdateTransactions({
 	tx = db,
 }: {
 	plaidTransactions: Omit<InsertTransaction, 'id'>[];
-	tx?: DB;
+	tx?: DB | Transaction;
 }) {
 	if (!plaidTransactions.length) {
 		return [];
@@ -52,14 +52,13 @@ export async function deleteTransactions({
 	tx = db,
 }: {
 	deletableTransactions: string[];
-	tx?: DB;
+	tx?: DB | Transaction;
 }) {
-	const _db = tx ?? db;
 	if (!deletableTransactions.length) {
 		return;
 	}
 
-	await _db
+	await tx
 		.delete(transactions)
 		.where(inArray(transactions.plaid_transaction_id, deletableTransactions));
 }
@@ -75,7 +74,7 @@ export async function getTransactions({
 	limit?: number;
 	page?: number;
 	searchTerm?: string;
-	tx?: DB;
+	tx?: DB | Transaction;
 }) {
 	const where: SQLWrapper[] = [eq(transactions.is_active, true)];
 
@@ -104,7 +103,7 @@ export async function updateAccountTransactions({
 }: {
 	accountId: string;
 	data: Partial<Omit<InsertTransaction, 'id'>>;
-	tx?: DB;
+	tx?: DB | Transaction;
 }) {
 	const result = await tx
 		.update(transactions)
@@ -122,7 +121,7 @@ export async function getUserTransactionsForStatisticsCard({
 }: {
 	filter: 'seven_days' | 'thirty_days' | 'year';
 	userId: string;
-	tx?: DB;
+	tx?: DB | Transaction;
 }) {
 	let sqlDateRange = sql`(CURRENT_DATE - INTERVAL '29 days')::DATE`;
 

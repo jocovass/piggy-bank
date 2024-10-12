@@ -1,5 +1,5 @@
 import { conflictUpdateSetAllColumns } from '~/app/utils/db';
-import { db, type DB } from '~/db/index.server';
+import { db, type DB, type Transaction } from '~/db/index.server';
 import { type InsertPassword, passwords } from '~/db/schema';
 
 export async function getUserPassword({
@@ -7,7 +7,7 @@ export async function getUserPassword({
 	tx = db,
 }: {
 	userId: string;
-	tx?: DB;
+	tx?: DB | Transaction;
 }) {
 	const password = await tx.query.passwords.findFirst({
 		where: (fields, { eq }) => eq(fields.userId, userId),
@@ -20,7 +20,7 @@ export async function upsertUserPassword({
 	tx = db,
 }: {
 	data: Omit<InsertPassword, 'id' | 'createdAt' | 'updatedAt'>;
-	tx?: DB;
+	tx?: DB | Transaction;
 }) {
 	const password = await tx
 		.insert(passwords)
