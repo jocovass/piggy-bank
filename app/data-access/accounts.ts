@@ -11,12 +11,11 @@ export async function createAccounts({
 	tx = db,
 }: {
 	plaidAccounts: Omit<InsertAccount, 'id'>[];
-	tx?: DB;
+	tx?: Transaction | DB;
 }) {
 	if (!plaidAccounts.length) {
 		return [];
 	}
-
 	const newAccounts = await tx
 		.insert(accounts)
 		.values(plaidAccounts)
@@ -36,7 +35,7 @@ export async function updateAccount({
 }: {
 	data: Partial<Omit<InsertAccount, 'id'>>;
 	id: string;
-	tx?: DB;
+	tx?: DB | Transaction;
 }) {
 	const result = await tx
 		.update(accounts)
@@ -47,7 +46,7 @@ export async function updateAccount({
 	return result;
 }
 
-export async function getAccounts(userId: string, tx: DB = db) {
+export async function getAccounts(userId: string, tx: DB | Transaction = db) {
 	const where: SQLWrapper[] = [eq(accounts.is_active, true)];
 
 	if (userId) {
@@ -66,7 +65,7 @@ export async function getAccountsByBankConnectionId({
 }: {
 	columns?: ColumnsSelection<typeof accounts>;
 	bankConnectionId: string;
-	tx?: DB;
+	tx?: DB | Transaction;
 }) {
 	const accounts = await tx.query.accounts.findMany({
 		columns,
@@ -80,9 +79,11 @@ export async function getAccountsByBankConnectionId({
 	return accounts;
 }
 
-export async function getAccountsWithBank(userId: string, tx?: Transaction) {
-	const _db = tx ?? db;
-	const data = await _db.query.accounts.findMany({
+export async function getAccountsWithBank(
+	userId: string,
+	tx: DB | Transaction = db,
+) {
+	const data = await tx.query.accounts.findMany({
 		where: (account, { eq, and }) =>
 			and(eq(account.user_id, userId), eq(account.is_active, true)),
 

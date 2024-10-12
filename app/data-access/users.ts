@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { db, type DB } from '~/db/index.server';
+import { db, type DB, type Transaction } from '~/db/index.server';
 import { users, type InsertUser } from '~/db/schema';
 
 export async function getUser({
@@ -7,7 +7,7 @@ export async function getUser({
 	tx = db,
 }: {
 	userId: string;
-	tx?: DB;
+	tx?: DB | Transaction;
 }) {
 	const user = await tx.query.users.findFirst({
 		where: eq(users.id, userId),
@@ -23,7 +23,7 @@ export async function updateUser({
 }: {
 	userId: string;
 	data: Partial<Omit<InsertUser, 'id'>>;
-	tx?: DB;
+	tx?: DB | Transaction;
 }) {
 	const user = await tx
 		.update(users)
@@ -39,7 +39,7 @@ export async function getUserByEmail({
 	tx = db,
 }: {
 	email: string;
-	tx?: DB;
+	tx?: DB | Transaction;
 }) {
 	const user = await tx.query.users.findFirst({
 		where: eq(users.email, email),

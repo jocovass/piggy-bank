@@ -1,7 +1,7 @@
 import { UTCDate } from '@date-fns/utc';
 import { eq } from 'drizzle-orm';
 import { type ColumnsSelection } from '~/app/utils/db';
-import { db, type DB } from '~/db/index.server';
+import { db, type DB, type Transaction } from '~/db/index.server';
 import { bankConnections, type InsertBankConnection } from '~/db/schema';
 
 const ninetyDays = 90 * 24 * 60 * 60 * 1000;
@@ -14,7 +14,7 @@ export async function createBankConnection({
 	tx = db,
 }: {
 	data: InsertBankConnection;
-	tx: DB;
+	tx?: DB | Transaction;
 }) {
 	const newBankConnection = await tx
 		.insert(bankConnections)
@@ -30,7 +30,7 @@ export async function updateBankConnection({
 }: {
 	bankConnectionId: string;
 	data: Partial<InsertBankConnection>;
-	tx?: DB;
+	tx?: DB | Transaction;
 }) {
 	const item = await tx
 		.update(bankConnections)
@@ -48,7 +48,7 @@ export async function getBankConnectionById({
 }: {
 	columns?: ColumnsSelection<typeof bankConnections>;
 	id: string;
-	tx?: DB;
+	tx?: DB | Transaction;
 }) {
 	const bankConnection = await tx.query.bankConnections.findFirst({
 		columns,
@@ -66,7 +66,7 @@ export async function getBankConnectionByInstitutionId({
 }: {
 	columns?: ColumnsSelection<typeof bankConnections>;
 	institutionId: string;
-	tx?: DB;
+	tx?: DB | Transaction;
 }) {
 	const bankConnection = await tx.query.bankConnections.findFirst({
 		columns,
@@ -87,7 +87,7 @@ export async function getBankConnectionByItemId({
 }: {
 	columns?: ColumnsSelection<typeof bankConnections>;
 	itemId: string;
-	tx?: DB;
+	tx?: DB | Transaction;
 }) {
 	const bankConnection = await tx.query.bankConnections.findFirst({
 		columns,
@@ -105,7 +105,7 @@ export async function getBankConnectionsForUser({
 }: {
 	columns?: ColumnsSelection<typeof bankConnections>;
 	userId: string;
-	tx?: DB;
+	tx?: DB | Transaction;
 }) {
 	const bankConnections = await tx.query.bankConnections.findMany({
 		columns,
